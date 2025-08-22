@@ -1,0 +1,418 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .form-section h5 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-light);
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+        .current-image-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: 1rem;
+    }
+
+    .current-image {
+        max-width: 200px;
+        max-height: 150px;
+        border-radius: 10px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        display: block;
+    }
+
+    .remove-image-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: var(--danger);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .image-upload-area {
+        border: 2px dashed var(--gray-light);
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        background: var(--gray-bg);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .image-upload-area:hover {
+        border-color: var(--primary-light);
+        background: rgba(57, 73, 171, 0.05);
+    }
+
+    .pegatinas-preview {
+        background: rgba(26, 35, 126, 0.05);
+        border: 2px solid var(--primary-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .pegatina-item {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        border-left: 4px solid var(--success);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item active">Editar Producto</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-edit me-2"></i>{{ title }}
+    </h2>
+    <div>
+        <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-outline-info me-2">
+            <i class="fas fa-eye me-2"></i>Ver Detalles
+        </a>
+        <a href="{% url 'productos:lista_productos' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+        </a>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="editProductForm">
+    {% csrf_token %}
+    <input type="hidden" id="removeImage" name="remove_image" value="false">
+
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Información básica -->
+            <div class="form-section">
+                <h5><i class="fas fa-info-circle me-2"></i>Información Básica</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_categoria" class="form-label required-field">Categoría</label>
+                            {{ form.categoria }}
+                            {% if form.categoria.errors %}
+                                <div class="error-message">{{ form.categoria.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_marca" class="form-label required-field">Marca</label>
+                            {{ form.marca }}
+                            {% if form.marca.errors %}
+                                <div class="error-message">{{ form.marca.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_modelo" class="form-label required-field">Modelo</label>
+                            {{ form.modelo }}
+                            {% if form.modelo.errors %}
+                                <div class="error-message">{{ form.modelo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <i class="fas fa-image me-2"></i>Imagen del Producto
+                            </label>
+
+                            <!-- Imagen actual -->
+                            {% if producto.imagen %}
+                                <div class="current-image-container" id="currentImageContainer">
+                                    <img src="{{ producto.imagen.url }}" alt="{{ producto.modelo }}" class="current-image">
+                                    <button type="button" class="remove-image-btn" onclick="removeCurrentImage()" title="Eliminar imagen">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    <small class="text-muted d-block mt-2">Imagen actual - Haz clic en X para eliminar</small>
+                                </div>
+                            {% endif %}
+
+                            <!-- Subir nueva imagen -->
+                            <div class="image-upload-area" onclick="document.getElementById('id_imagen').click()">
+                                <div id="uploadPlaceholder">
+                                    <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-2">
+                                        {% if producto.imagen %}
+                                            Seleccionar nueva imagen
+                                        {% else %}
+                                            Seleccionar imagen del producto
+                                        {% endif %}
+                                    </p>
+                                    <small class="text-muted">JPG, PNG, GIF - Máx. 5MB</small>
+                                </div>
+                                <div id="newImagePreview" style="display: none;">
+                                    <img id="previewImg" src="" alt="Preview" style="max-width: 150px; border-radius: 8px;">
+                                    <small class="text-muted d-block mt-2" id="fileName"></small>
+                                </div>
+                            </div>
+
+                            {{ form.imagen }}
+                            {% if form.imagen.errors %}
+                                <div class="error-message">{{ form.imagen.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_numero_serie" class="form-label">Número de Serie</label>
+                            {{ form.numero_serie }}
+                            {% if form.numero_serie.errors %}
+                                <div class="error-message">{{ form.numero_serie.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_codigo_barras" class="form-label">Código de Barras</label>
+                            {{ form.codigo_barras }}
+                            {% if form.codigo_barras.errors %}
+                                <div class="error-message">{{ form.codigo_barras.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_estado" class="form-label required-field">Estado</label>
+                            {{ form.estado }}
+                            {% if form.estado.errors %}
+                                <div class="error-message">{{ form.estado.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_condicion" class="form-label required-field">Condición</label>
+                            {{ form.condicion }}
+                            {% if form.condicion.errors %}
+                                <div class="error-message">{{ form.condicion.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de compra -->
+            <div class="form-section">
+                <h5><i class="fas fa-shopping-cart me-2"></i>Información de Compra</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_fecha_compra" class="form-label">Fecha de Compra</label>
+                            {{ form.fecha_compra }}
+                            {% if form.fecha_compra.errors %}
+                                <div class="error-message">{{ form.fecha_compra.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_precio_compra" class="form-label">Precio (€)</label>
+                            {{ form.precio_compra }}
+                            {% if form.precio_compra.errors %}
+                                <div class="error-message">{{ form.precio_compra.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_proveedor" class="form-label">Proveedor</label>
+                            {{ form.proveedor }}
+                            {% if form.proveedor.errors %}
+                                <div class="error-message">{{ form.proveedor.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_factura_numero" class="form-label">Número de Factura</label>
+                            {{ form.factura_numero }}
+                            {% if form.factura_numero.errors %}
+                                <div class="error-message">{{ form.factura_numero.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_fecha_fin_garantia" class="form-label">Fecha Fin Garantía</label>
+                            {{ form.fecha_fin_garantia }}
+                            {% if form.fecha_fin_garantia.errors %}
+                                <div class="error-message">{{ form.fecha_fin_garantia.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Estado y ubicación -->
+            <div class="form-section">
+                <h5><i class="fas fa-map-marker-alt me-2"></i>Ubicación</h5>
+                <div class="mb-3">
+                    <label for="id_ubicacion_actual" class="form-label">Ubicación Actual</label>
+                    {{ form.ubicacion_actual }}
+                    {% if form.ubicacion_actual.errors %}
+                        <div class="error-message">{{ form.ubicacion_actual.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Observaciones -->
+            <div class="form-section">
+                <h5><i class="fas fa-comment me-2"></i>Observaciones</h5>
+                <div class="mb-3">
+                    <label for="id_observaciones" class="form-label">Observaciones</label>
+                    {{ form.observaciones }}
+                    {% if form.observaciones.errors %}
+                        <div class="error-message">{{ form.observaciones.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Preview de Pegatinas -->
+            <div class="form-section">
+                <h5><i class="fas fa-tags me-2"></i>Pegatinas Identificativas</h5>
+
+                {% if pegatinas %}
+                    <div class="pegatinas-preview">
+                        {% for pegatina in pegatinas %}
+                        <div class="pegatina-item">
+                            <div>
+                                <strong>{{ pegatina.get_tipo_pegatina_display }}</strong><br>
+                                <small class="text-muted">
+                                    {{ pegatina.fecha_generacion|date:"d/m/Y H:i" }}
+                                    {% if pegatina.impresa %}
+                                        <span class="badge bg-success ms-1">Impresa</span>
+                                    {% else %}
+                                        <span class="badge bg-warning ms-1">Pendiente</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{% url 'productos:descargar_pegatina' pegatina.id %}"
+                                   class="btn btn-sm btn-outline-primary" target="_blank" title="Descargar">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-tag text-muted mb-2" style="font-size: 2rem;"></i>
+                        <p class="text-muted mb-2">No hay pegatinas generadas para este producto</p>
+                        <small class="text-muted">Haz clic en "Generar Nueva" para crear la primera pegatina</small>
+                    </div>
+                {% endif %}
+
+                <div class="mt-3">
+                    <a href="{% url 'productos:generar_pegatinas' producto.id %}" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="fas fa-plus me-1"></i>Generar Nueva
+                    </a>
+                    <a href="{% url 'productos:ver_pegatinas' producto.id %}" class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-eye me-1"></i>Ver Todas
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="d-flex justify-content-end gap-3 mt-4">
+        <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-secondary">
+            <i class="fas fa-times me-2"></i>Cancelar
+        </a>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>Actualizar Producto
+        </button>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Gestión de imágenes
+function removeCurrentImage() {
+    document.getElementById('removeImage').value = 'true';
+    document.getElementById('currentImageContainer').style.display = 'none';
+    document.getElementById('uploadPlaceholder').innerHTML = `
+        <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+        <p class="text-muted mb-2">Seleccionar imagen del producto</p>
+        <small class="text-muted">JPG, PNG, GIF - Máx. 5MB</small>
+    `;
+}
+
+// Preview de nueva imagen
+document.getElementById('id_imagen').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('previewImg').src = e.target.result;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('uploadPlaceholder').style.display = 'none';
+            document.getElementById('newImagePreview').style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+});
+</script>
+{% endblock %}

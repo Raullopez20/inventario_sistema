@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+
+{% block title %}Generar Pegatinas - {{ producto.numero_serie }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pegatina-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .pegatina-section h5 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-light);
+    }
+
+    .tipo-pegatina {
+        background: var(--gray-bg);
+        border: 2px solid var(--gray-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .tipo-pegatina:hover {
+        border-color: var(--primary);
+        background: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .tipo-pegatina.selected {
+        border-color: var(--primary);
+        background: linear-gradient(135deg, rgba(26, 35, 126, 0.1) 0%, rgba(57, 73, 171, 0.05) 100%);
+        box-shadow: 0 4px 15px rgba(26, 35, 126, 0.2);
+    }
+
+    .checkbox-custom {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        transform: scale(1.5);
+    }
+
+    .tipo-icon {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        display: block;
+        text-align: center;
+    }
+
+    .tipo-nombre {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        text-align: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .tipo-descripcion {
+        color: var(--gray-600);
+        font-size: 0.9rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .btn-generar {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+        width: 100%;
+    }
+
+    .btn-generar:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(26, 35, 126, 0.4);
+        color: white;
+    }
+
+    .info-producto {
+        background: linear-gradient(135deg, var(--info) 0%, #42a5f5 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .pegatina-existente {
+        background: white;
+        border: 2px solid var(--success);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--gray-dark);
+        background: var(--gray-bg);
+        border-radius: 15px;
+        border: 2px dashed var(--gray-light);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:detalle_producto' producto.id %}">{{ producto.numero_serie }}</a></li>
+        <li class="breadcrumb-item active">Generar Pegatinas</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-tags me-2"></i>Generar Pegatinas Identificativas
+    </h2>
+    <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-2"></i>Volver al Producto
+    </a>
+</div>
+
+<!-- Información del producto -->
+<div class="info-producto">
+    <h4><i class="fas fa-box me-2"></i>{{ producto.numero_serie }}</h4>
+    <p class="mb-0">{{ producto.categoria.nombre }} - {{ producto.marca.nombre }} {{ producto.modelo }}</p>
+    <small>Estado: {{ producto.get_estado_display }}</small>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Selección de tipos de pegatinas -->
+        <div class="pegatina-section">
+            <h5><i class="fas fa-check-circle me-2"></i>Selecciona los Tipos de Pegatinas</h5>
+
+            <form id="formGenerarPegatinas">
+                <div class="row">
+                    <!-- Código QR -->
+                    <div class="col-md-6">
+                        <div class="tipo-pegatina" onclick="toggleTipo('QR')">
+                            <input type="checkbox" class="checkbox-custom" id="tipo_QR" value="QR" checked>
+                            <i class="fas fa-qrcode tipo-icon"></i>
+                            <div class="tipo-nombre">Código QR</div>
+                            <div class="tipo-descripcion">Código QR con información del producto para acceso digital rápido</div>
+                        </div>
+                    </div>
+
+                    <!-- Código de Barras -->
+                    <div class="col-md-6">
+                        <div class="tipo-pegatina" onclick="toggleTipo('CODIGO_BARRAS')">
+                            <input type="checkbox" class="checkbox-custom" id="tipo_CODIGO_BARRAS" value="CODIGO_BARRAS">
+                            <i class="fas fa-barcode tipo-icon"></i>
+                            <div class="tipo-nombre">Código de Barras</div>
+                            <div class="tipo-descripcion">Código de barras estándar para sistemas de inventario</div>
+                        </div>
+                    </div>
+
+                    <!-- Etiqueta Simple -->
+                    <div class="col-md-6">
+                        <div class="tipo-pegatina" onclick="toggleTipo('ETIQUETA_SIMPLE')">
+                            <input type="checkbox" class="checkbox-custom" id="tipo_ETIQUETA_SIMPLE" value="ETIQUETA_SIMPLE">
+                            <i class="fas fa-tag tipo-icon"></i>
+                            <div class="tipo-nombre">Etiqueta Simple</div>
+                            <div class="tipo-descripcion">Etiqueta con información básica para identificación rápida</div>
+                        </div>
+                    </div>
+
+                    <!-- Etiqueta Completa -->
+                    <div class="col-md-6">
+                        <div class="tipo-pegatina" onclick="toggleTipo('ETIQUETA_COMPLETA')">
+                            <input type="checkbox" class="checkbox-custom" id="tipo_ETIQUETA_COMPLETA" value="ETIQUETA_COMPLETA">
+                            <i class="fas fa-id-card tipo-icon"></i>
+                            <div class="tipo-nombre">Etiqueta Completa</div>
+                            <div class="tipo-descripcion">Etiqueta profesional con toda la información + QR integrado</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4">
+                    <button type="button" class="btn-generar" onclick="generarPegatinasSeleccionadas()" id="btnGenerar">
+                        <i class="fas fa-plus me-2"></i>Generar Pegatinas Seleccionadas
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Pegatinas existentes -->
+        <div class="pegatina-section">
+            <h5><i class="fas fa-list me-2"></i>Pegatinas Existentes</h5>
+            <div id="pegatinasExistentes">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Cargando pegatinas...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Información -->
+        <div class="pegatina-section">
+            <h5><i class="fas fa-info-circle me-2"></i>Información</h5>
+
+            <h6>¿Cuándo usar cada tipo?</h6>
+            <ul class="list-unstyled">
+                <li><strong>QR:</strong> Para acceso rápido digital</li>
+                <li><strong>Código de Barras:</strong> Para sistemas de inventario</li>
+                <li><strong>Etiqueta Simple:</strong> Para identificación rápida</li>
+                <li><strong>Etiqueta Completa:</strong> Para archivo físico</li>
+            </ul>
+
+            <h6 class="mt-3">Recomendaciones</h6>
+            <ul class="list-unstyled">
+                <li>• Imprime en papel adhesivo resistente</li>
+                <li>• Usa protector transparente si es necesario</li>
+                <li>• Coloca en lugar visible del producto</li>
+                <li>• Mantén una copia digital de respaldo</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    cargarPegatinasExistentes();
+    actualizarEstadoBoton();
+});
+
+function toggleTipo(tipo) {
+    const checkbox = document.getElementById('tipo_' + tipo);
+    const container = checkbox.closest('.tipo-pegatina');
+
+    checkbox.checked = !checkbox.checked;
+
+    if (checkbox.checked) {
+        container.classList.add('selected');
+    } else {
+        container.classList.remove('selected');
+    }
+
+    actualizarEstadoBoton();
+}
+
+function actualizarEstadoBoton() {
+    const checkboxes = document.querySelectorAll('.checkbox-custom');
+    const btnGenerar = document.getElementById('btnGenerar');
+    const algunSeleccionado = Array.from(checkboxes).some(cb => cb.checked);
+
+    btnGenerar.disabled = !algunSeleccionado;
+    btnGenerar.style.opacity = algunSeleccionado ? '1' : '0.5';
+}
+
+function cargarPegatinasExistentes() {
+    const productoId = {{ producto.id }};
+
+    fetch(`/productos/${productoId}/pegatinas/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const pegatinasCards = doc.querySelectorAll('.pegatina-card');
+
+        let contenido = '';
+
+        if (pegatinasCards.length > 0) {
+            contenido = `<h6 class="text-success mb-3">
+                <i class="fas fa-check-circle me-2"></i>
+                ${pegatinasCards.length} pegatina(s) disponible(s)
+            </h6>`;
+
+            pegatinasCards.forEach((card, index) => {
+                const qrImg = card.querySelector('img');
+                contenido += `
+                    <div class="pegatina-existente">
+                        <div class="d-flex align-items-center">
+                            <div class="me-3">
+                                ${qrImg ? `<img src="${qrImg.src}" width="40" height="40" style="border-radius: 5px;">` : '<i class="fas fa-qrcode fa-2x text-primary"></i>'}
+                            </div>
+                            <div>
+                                <strong>Pegatina ${index + 1}</strong>
+                                <small class="text-muted d-block">Generada recientemente</small>
+                            </div>
+                        </div>
+                        <a href="/productos/${productoId}/pegatinas/" class="btn btn-sm btn-outline-primary">Ver</a>
+                    </div>
+                `;
+            });
+        } else {
+            contenido = `
+                <div class="empty-state">
+                    <i class="fas fa-tag"></i>
+                    <h6>Sin pegatinas</h6>
+                    <p class="mb-0">No hay pegatinas generadas para este producto.</p>
+                </div>
+            `;
+        }
+
+        document.getElementById('pegatinasExistentes').innerHTML = contenido;
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('pegatinasExistentes').innerHTML = `
+            <div class="text-center text-danger">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Error al cargar pegatinas</p>
+            </div>
+        `;
+    });
+}
+
+function generarPegatinasSeleccionadas() {
+    const productoId = {{ producto.id }};
+    const checkboxes = document.querySelectorAll('.checkbox-custom:checked');
+    const tiposSeleccionados = Array.from(checkboxes).map(cb => cb.value);
+
+    console.log('Tipos seleccionados:', tiposSeleccionados); // Debug
+
+    if (tiposSeleccionados.length === 0) {
+        alert('Selecciona al menos un tipo de pegatina para generar.');
+        return;
+    }
+
+    const btnGenerar = document.getElementById('btnGenerar');
+    const textoOriginal = btnGenerar.innerHTML;
+
+    // Mostrar loading
+    btnGenerar.disabled = true;
+    btnGenerar.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+
+    // Realizar petición AJAX con JSON
+    fetch(`/productos/${productoId}/generar-pegatinas/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tipos: tiposSeleccionados })
+    })
+    .then(response => {
+        console.log('Response status:', response.status); // Debug
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data); // Debug
+        if (data.success) {
+            alert(`¡${data.message}!\n\nTipos generados: ${data.tipos_generados.join(', ')}`);
+            cargarPegatinasExistentes();
+        } else {
+            alert(`Error: ${data.error}`);
+        }
+    })
+    .catch(error => {
+        console.error('Error completo:', error);
+        alert('Error al generar las pegatinas. Revisa la consola para más detalles.');
+    })
+    .finally(() => {
+        btnGenerar.disabled = false;
+        btnGenerar.innerHTML = textoOriginal;
+        actualizarEstadoBoton();
+    });
+}
+
+// Inicializar estados
+document.addEventListener('DOMContentLoaded', function() {
+    // Marcar QR como seleccionado por defecto
+    document.querySelector('.tipo-pegatina').classList.add('selected');
+});
+</script>
+{% endblock %}

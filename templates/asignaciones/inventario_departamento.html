@@ -1,0 +1,380 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario por Departamento - Sistema de Inventario{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Inventario por Departamento</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        transform: translate(-40px, 40px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .filter-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(26,35,126,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    .filter-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .filter-title i {
+        font-size: 1.2rem;
+        color: var(--primary);
+    }
+    .stat-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.3rem 1.5rem 1.1rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+        text-align: center;
+    }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.info { border-left-color: var(--info); }
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        z-index: 2;
+        position: relative;
+    }
+    .stat-label {
+        color: var(--gray-dark);
+        font-weight: 500;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 0.2rem;
+        z-index: 2;
+        position: relative;
+    }
+    .table {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background: white;
+        box-shadow: var(--shadow-soft);
+    }
+    .table thead {
+        background: var(--gradient-primary);
+        color: white;
+    }
+    .badge.bg-info { background: var(--info)!important; color: #fff!important; }
+    .badge.bg-primary { background: var(--primary)!important; color: #fff!important; }
+    .badge.bg-warning { background: var(--warning)!important; color: #fff!important; }
+    .badge.bg-success { background: var(--success)!important; color: #fff!important; }
+    .badge.bg-secondary { background: var(--gray-dark)!important; color: #fff!important; }
+    .btn-primary, .btn-success {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-primary:hover, .btn-success:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        color: #fff;
+    }
+    .btn-outline-secondary {
+        border: 2px solid var(--gray-light);
+        color: var(--gray-dark);
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-outline-secondary:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header principal -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-building"></i>
+            Inventario por Departamento
+            {% if departamento_seleccionado %}- {{ departamento_seleccionado.nombre }}{% endif %}
+        </h1>
+        <p class="page-subtitle">Visualiza y filtra el inventario asignado por cada departamento</p>
+    </div>
+</div>
+
+<!-- Panel de filtros -->
+<div class="filter-panel">
+    <div class="filter-title">
+        <i class="fas fa-filter"></i>
+        Filtros de Búsqueda
+    </div>
+    <form method="get" id="filterForm">
+        <div class="row mb-3 g-3">
+            <div class="col-md-6">
+                <label for="departamentoSelect" class="form-label"><i class="fas fa-building"></i> Departamento</label>
+                <select class="form-select" id="departamentoSelect" name="departamento" onchange="filtrarDepartamento()">
+                    <option value="">Todos los departamentos</option>
+                    {% for departamento in departamentos %}
+                        <option value="{{ departamento.id }}" {% if departamento_seleccionado and departamento.id == departamento_seleccionado.id %}selected{% endif %}>{{ departamento.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 d-flex align-items-end gap-2">
+                <button type="button" class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()">
+                    <i class="fas fa-times"></i> Limpiar Filtros
+                </button>
+                <a href="{% url 'asignaciones:agregar_asignacion' %}" class="btn btn-success w-100">
+                    <i class="fas fa-plus-circle"></i> Nueva Asignación
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="stat-row">
+    <div class="stat-card info">
+        <div class="stat-value">{{ departamentos|length }}</div>
+        <div class="stat-label">Departamentos</div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-value">{{ asignaciones_entrega|length }}</div>
+        <div class="stat-label">Entregas</div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-value">{{ asignaciones_prestamo|length }}</div>
+        <div class="stat-label">Préstamos</div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-value">{{ asignaciones|length }}</div>
+        <div class="stat-label">Total Asignaciones</div>
+    </div>
+</div>
+
+<!-- Tabla de asignaciones -->
+<div class="table-responsive">
+    {% if asignaciones %}
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>Producto</th>
+                <th>Empleado</th>
+                <th>Departamento</th>
+                <th>Tipo</th>
+                <th>Fecha Entrega</th>
+                <th>Estado Producto</th>
+                <th>Días en Posesión</th>
+                <th>Confirmado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asignacion in asignaciones %}
+            <tr>
+                <td>
+                    <strong>{{ asignacion.producto.id_interno }}</strong><br>
+                    <small class="text-muted">
+                        {{ asignacion.producto.categoria.nombre }} {{ asignacion.producto.marca.nombre }}
+                    </small>
+                </td>
+                <td>
+                    {% if asignacion.empleado_receptor %}
+                        <strong>{{ asignacion.empleado_receptor.nombre }}</strong><br>
+                        <small class="text-muted">{{ asignacion.empleado_receptor.puesto }}</small>
+                    {% else %}
+                        <span class="text-muted">Sin asignar</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge bg-info">{{ asignacion.departamento.nombre }}</span>
+                </td>
+                <td>
+                    {% if asignacion.tipo_asignacion == 'ENTREGA' %}
+                        <span class="badge bg-primary">{{ asignacion.get_tipo_asignacion_display }}</span>
+                    {% elif asignacion.tipo_asignacion == 'PRESTAMO' %}
+                        <span class="badge bg-warning">{{ asignacion.get_tipo_asignacion_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ asignacion.get_tipo_asignacion_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {{ asignacion.fecha_entrega|date:"d/m/Y H:i" }}<br>
+                    <small class="text-muted">{{ asignacion.usuario_entrega.username }}</small>
+                </td>
+                <td>
+                    {% if asignacion.estado_producto_entrega == 'NUEVO' %}
+                        <span class="badge bg-success">{{ asignacion.get_estado_producto_entrega_display }}</span>
+                    {% elif asignacion.estado_producto_entrega == 'USADO_BUENO' %}
+                        <span class="badge bg-info">{{ asignacion.get_estado_producto_entrega_display }}</span>
+                    {% else %}
+                        <span class="badge bg-secondary">{{ asignacion.get_estado_producto_entrega_display }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span class="badge bg-light text-dark">{{ asignacion.dias_en_posesion }} días</span>
+                    {% if asignacion.prestamo_vencido %}
+                        <br><small class="text-danger"><i class="fas fa-exclamation-triangle"></i> Vencido</small>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if asignacion.confirmado_empleado %}
+                        <span class="text-success"><i class="fas fa-check-circle"></i> Sí</span>
+                    {% else %}
+                        <span class="text-warning"><i class="fas fa-clock"></i> Pendiente</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <a href="{% url 'asignaciones:detalle_asignacion' asignacion.id %}"
+                           class="btn btn-outline-primary" title="Ver Detalles">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'productos:detalle_producto' asignacion.producto.id %}"
+                           class="btn btn-outline-info" title="Ver Producto">
+                            <i class="fas fa-box"></i>
+                        </a>
+                        <a href="{% url 'asignaciones:devolver_producto' asignacion.id %}"
+                           class="btn btn-outline-warning" title="Procesar Devolución">
+                            <i class="fas fa-undo"></i>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+        <h4 class="text-muted">No hay asignaciones</h4>
+        <p class="text-muted">
+            {% if departamento_seleccionado %}
+                No se encontraron asignaciones activas para el departamento "{{ departamento_seleccionado.nombre }}".
+            {% else %}
+                No hay asignaciones activas en el sistema.
+            {% endif %}
+        </p>
+        <a href="{% url 'asignaciones:agregar_asignacion' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Crear Primera Asignación
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function filtrarDepartamento() {
+        const select = document.getElementById('departamentoSelect');
+        const departamentoId = select.value;
+        if (departamentoId) {
+            window.location.href = "{% url 'core:inventario_departamento' %}?departamento=" + departamentoId;
+        } else {
+            window.location.href = "{% url 'core:inventario_departamento' %}";
+        }
+    }
+    function limpiarFiltros() {
+        window.location.href = "{% url 'core:inventario_departamento' %}";
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

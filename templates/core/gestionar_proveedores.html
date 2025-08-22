@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Proveedores - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .management-section {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(26,35,126,0.08);
+    }
+    .proveedor-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem 1.7rem 1.1rem 2.2rem;
+        display: flex;
+        flex-direction: column;
+    }
+    .proveedor-card.inactive {
+        opacity: 0.7;
+        background-color: var(--gray-bg);
+        border-left-color: var(--gray-dark);
+    }
+    .proveedor-card:hover {
+        transform: translateY(-4px) scale(1.012);
+        box-shadow: 0 8px 32px rgba(26,35,126,0.13);
+    }
+    .proveedor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    .proveedor-nombre {
+        font-size: 1.13rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0 0 0.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .proveedor-nombre i {
+        font-size: 1.1rem;
+        color: var(--primary);
+        margin-right: 0.4rem;
+    }
+    .proveedor-nif {
+        font-size: 0.97rem;
+        color: var(--gray-dark);
+        margin-bottom: 0.2rem;
+    }
+    .status-badge {
+        padding: 0.45rem 1.1rem;
+        border-radius: 18px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: 1rem;
+    }
+    .status-active {
+        background: linear-gradient(135deg, var(--success), #66bb6a);
+        color: white;
+    }
+    .status-inactive {
+        background: linear-gradient(135deg, var(--gray-dark), #6c757d);
+        color: white;
+    }
+    .contact-info {
+        background: var(--gray-bg);
+        border-radius: var(--border-radius);
+        padding: 1rem 1.2rem;
+        margin: 0.7rem 0 0.7rem 0;
+        border-left: 3px solid var(--primary);
+    }
+    .proveedor-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-light);
+    }
+    .btn-toggle {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.93rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 1px 4px rgba(26,35,126,0.06);
+        color: white;
+    }
+    .btn-toggle.btn-warning {
+        background: linear-gradient(135deg, var(--warning), #ffca28);
+        color: var(--gray-dark);
+    }
+    .btn-toggle.btn-success {
+        background: linear-gradient(135deg, var(--success), #66bb6a);
+        color: white;
+    }
+    .btn-toggle:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.1);
+    }
+    .btn-danger {
+        background: linear-gradient(135deg, var(--danger), #ef5350);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.93rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 1px 4px rgba(26,35,126,0.06);
+    }
+    .btn-danger:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
+    .btn-nuevo-proveedor {
+        background: var(--gradient-primary);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+        border: none;
+        box-shadow: 0 4px 12px rgba(26, 35, 126, 0.13);
+    }
+    .btn-nuevo-proveedor:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+    }
+    .info-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        margin-top: 2rem;
+        border-top: 4px solid var(--primary);
+    }
+    .info-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 1.5rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .info-body {
+        padding: 2rem;
+    }
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .tips-list li {
+        padding: 0.6rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        color: var(--gray-dark);
+    }
+    .tips-list li::before {
+        content: '💡';
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+    @media (max-width: 900px) {
+        .management-section, .info-panel {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:admin_panel' %}">Panel Admin</a></li>
+        <li class="breadcrumb-item active">Gestionar Proveedores</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Header principal -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-truck"></i>
+            Gestionar Proveedores
+        </h1>
+        <p class="page-subtitle">Gestión y administración de proveedores del sistema</p>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-list me-2"></i>Lista de Proveedores ({{ proveedores.count }})
+    </h2>
+    <button class="btn-nuevo-proveedor" data-bs-toggle="modal" data-bs-target="#modalAgregarProveedor">
+        <i class="fas fa-plus me-2"></i>Nuevo Proveedor
+    </button>
+</div>
+
+<!-- Lista de proveedores -->
+<div class="management-section">
+    {% if proveedores %}
+        <div class="row">
+            {% for proveedor in proveedores %}
+            <div class="col-md-6 col-lg-4">
+                <div class="proveedor-card {% if not proveedor.activo %}inactive{% endif %}">
+                    <div class="proveedor-header">
+                        <div>
+                            <div class="proveedor-nombre"><i class="fas fa-truck"></i>{{ proveedor.nombre }}</div>
+                            <div class="proveedor-nif">{{ proveedor.nif_cif }}</div>
+                        </div>
+                        <span class="status-badge {% if proveedor.activo %}status-active{% else %}status-inactive{% endif %}">
+                            <i class="fas fa-circle"></i>
+                            {% if proveedor.activo %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </div>
+                    <div class="contact-info">
+                        {% if proveedor.telefono %}
+                        <div class="mb-2">
+                            <i class="fas fa-phone me-2 text-primary"></i>
+                            <strong>{{ proveedor.telefono }}</strong>
+                        </div>
+                        {% endif %}
+                        {% if proveedor.email %}
+                        <div class="mb-2">
+                            <i class="fas fa-envelope me-2 text-primary"></i>
+                            <strong>{{ proveedor.email }}</strong>
+                        </div>
+                        {% endif %}
+                        {% if proveedor.direccion %}
+                        <div class="mb-2">
+                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>
+                            <small>{{ proveedor.direccion }}</small>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <i class="fas fa-calendar me-2 text-primary"></i>
+                            <small>Creado: {{ proveedor.created_at|date:"d/m/Y" }}</small>
+                        </div>
+                    </div>
+                    <div class="proveedor-actions">
+                        <form method="post" class="flex-grow-1">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_activo">
+                            <input type="hidden" name="proveedor_id" value="{{ proveedor.id }}">
+                            <button type="submit" class="btn-toggle {% if proveedor.activo %}btn-warning{% else %}btn-success{% endif %} w-100">
+                                <i class="fas {% if proveedor.activo %}fa-pause{% else %}fa-play{% endif %} me-1"></i>
+                                {% if proveedor.activo %}Desactivar{% else %}Activar{% endif %}
+                            </button>
+                        </form>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="eliminar">
+                            <input type="hidden" name="proveedor_id" value="{{ proveedor.id }}">
+                            <button type="submit" class="btn-danger" onclick="return confirm('¿Seguro que deseas eliminar este proveedor?');">
+                                <i class="fas fa-trash me-1"></i>Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state text-center py-5">
+            <div class="empty-icon"><i class="fas fa-truck fa-3x text-muted mb-3"></i></div>
+            <div class="empty-title">No hay proveedores registrados</div>
+            <div class="empty-description">Haz clic en "Nuevo Proveedor" para agregar el primero.</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Modal para agregar proveedor -->
+<div class="modal fade" id="modalAgregarProveedor" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" style="background: var(--gradient-primary); color: white;">
+                <h5 class="modal-title">
+                    <i class="fas fa-truck me-2"></i>Nuevo Proveedor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <input type="hidden" name="action" value="crear">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="nombre" name="nombre" required>
+                                <label for="nombre">Nombre del Proveedor *</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="nif_cif" name="nif_cif" required>
+                                <label for="nif_cif">NIF/CIF *</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="tel" class="form-control" id="telefono" name="telefono">
+                                <label for="telefono">Teléfono</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-floating mb-3">
+                                <input type="email" class="form-control" id="email" name="email">
+                                <label for="email">Email</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control" id="direccion" name="direccion" style="height: 100px"></textarea>
+                        <label for="direccion">Dirección</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save me-2"></i>Crear Proveedor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Panel informativo -->
+<div class="info-panel">
+    <div class="info-header">
+        <i class="fas fa-info-circle"></i>
+        Información sobre la gestión de proveedores
+    </div>
+    <div class="info-body">
+        <ul class="tips-list">
+            <li>Utiliza el botón "Nuevo Proveedor" para agregar un nuevo registro.</li>
+            <li>Puedes activar o desactivar proveedores según su estado actual.</li>
+            <li>Haz clic en eliminar para quitar un proveedor del sistema.</li>
+            <li>Los proveedores inactivos aparecen atenuados y no pueden ser seleccionados en operaciones.</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

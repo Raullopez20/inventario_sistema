@@ -1,0 +1,592 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ producto.modelo }} - Detalle de Producto{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .detail-section h5 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-light);
+    }
+
+    .product-image {
+        max-width: 100%;
+        max-height: 400px;
+        border-radius: 15px;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .product-image-placeholder {
+        width: 100%;
+        height: 300px;
+        background: var(--gray-light);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-dark);
+        font-size: 4rem;
+    }
+
+    .status-badge {
+        padding: 0.75rem 1.5rem;
+        border-radius: 25px;
+        font-size: 1rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        display: inline-block;
+    }
+
+    .status-disponible { background: var(--success); color: white; }
+    .status-entregado { background: var(--warning); color: var(--gray-dark); }
+    .status-averiado { background: var(--danger); color: white; }
+    .status-roto { background: var(--danger); color: white; }
+    .status-recogido { background: var(--info); color: white; }
+    .status-baja { background: var(--gray-dark); color: white; }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        background: var(--gray-bg);
+        border-radius: 10px;
+        border-left: 4px solid var(--primary-light);
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--gray-dark);
+    }
+
+    .info-value {
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+
+    .pegatinas-section {
+        background: rgba(26, 35, 126, 0.05);
+        border: 2px solid var(--primary-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .pegatina-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--success);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .qr-preview {
+        width: 50px;
+        height: 50px;
+        border-radius: 5px;
+        border: 1px solid var(--gray-light);
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item active">{{ producto.modelo }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Agregar token CSRF para JavaScript -->
+{% csrf_token %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-box me-2"></i>{{ producto.marca.nombre }} {{ producto.modelo }}
+    </h2>
+    <div>
+        <a href="{% url 'productos:editar_producto' producto.id %}" class="btn btn-outline-primary me-2">
+            <i class="fas fa-edit me-2"></i>Editar
+        </a>
+        <a href="{% url 'productos:lista_productos' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a la lista
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Información principal -->
+        <div class="detail-section">
+            <h5><i class="fas fa-info-circle me-2"></i>Información del Producto</h5>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <span class="info-label">Número de Serie:</span>
+                        <span class="info-value">{{ producto.numero_serie }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Categoría:</span>
+                        <span class="info-value">{{ producto.categoria.nombre }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Marca:</span>
+                        <span class="info-value">{{ producto.marca.nombre }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Modelo:</span>
+                        <span class="info-value">{{ producto.modelo }}</span>
+                    </div>
+                    {% if producto.codigo_barras %}
+                    <div class="info-item">
+                        <span class="info-label">Código de Barras:</span>
+                        <span class="info-value">{{ producto.codigo_barras }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <span class="info-label">Estado:</span>
+                        <span class="status-badge status-{{ producto.estado|lower }}">
+                            {{ producto.get_estado_display }}
+                        </span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Condición:</span>
+                        <span class="info-value">{{ producto.get_condicion_display }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Precio de Compra:</span>
+                        <span class="info-value">{{ producto.precio_compra|floatformat:2 }} €</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Fecha de Compra:</span>
+                        <span class="info-value">{{ producto.fecha_compra|date:"d/m/Y" }}</span>
+                    </div>
+                    {% if producto.proveedor %}
+                    <div class="info-item">
+                        <span class="info-label">Proveedor:</span>
+                        <span class="info-value">{{ producto.proveedor.nombre }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Ubicación -->
+            <div class="mt-3">
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-map-marker-alt me-2"></i>Ubicación Actual:
+                    </span>
+                    <span class="info-value">
+                        {% if producto.ubicacion_actual %}
+                            {{ producto.ubicacion_actual.nombre }}
+                            {% if producto.ubicacion_actual.edificio or producto.ubicacion_actual.planta or producto.ubicacion_actual.sala %}
+                                <small class="text-muted d-block">
+                                    {% if producto.ubicacion_actual.edificio %}{{ producto.ubicacion_actual.edificio }}{% endif %}
+                                    {% if producto.ubicacion_actual.planta %} - Planta {{ producto.ubicacion_actual.planta }}{% endif %}
+                                    {% if producto.ubicacion_actual.sala %} - {{ producto.ubicacion_actual.sala }}{% endif %}
+                                </small>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">No asignada</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Garantía -->
+            {% if producto.fecha_fin_garantia %}
+            <div class="mt-3">
+                <div class="info-item">
+                    <span class="info-label">
+                        <i class="fas fa-shield-alt me-2"></i>Garantía hasta:
+                    </span>
+                    <span class="info-value">
+                        {{ producto.fecha_fin_garantia|date:"d/m/Y" }}
+                        <span id="garantiaStatus" data-fecha="{{ producto.fecha_fin_garantia|date:'Y-m-d' }}"></span>
+                    </span>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Campos personalizados de categoría -->
+            {% if producto.especificaciones %}
+            <div class="mt-4">
+                <h6><i class="fas fa-cogs me-2"></i>Características Específicas</h6>
+                <div class="row">
+                    {% for campo, valor in producto.especificaciones.items %}
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <span class="info-label">{{ campo|title }}:</span>
+                            <span class="info-value">{{ valor }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Observaciones -->
+            {% if producto.observaciones %}
+            <div class="mt-4">
+                <h6><i class="fas fa-comment me-2"></i>Observaciones</h6>
+                <div class="alert alert-info">
+                    {{ producto.observaciones|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Historial de asignaciones -->
+        {% if historial_asignaciones %}
+        <div class="detail-section">
+            <h5><i class="fas fa-history me-2"></i>Historial de Asignaciones</h5>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Empleado</th>
+                            <th>Departamento</th>
+                            <th>Fecha Entrega</th>
+                            <th>Fecha Devolución</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for asignacion in historial_asignaciones %}
+                        <tr>
+                            <td>
+                                {% if asignacion.empleado_receptor %}
+                                    {{ asignacion.empleado_receptor.nombre }}
+                                {% else %}
+                                    <span class="text-muted">No especificado</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ asignacion.departamento.nombre }}</td>
+                            <td>{{ asignacion.fecha_entrega|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if asignacion.fecha_devolucion %}
+                                    {{ asignacion.fecha_devolucion|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="badge bg-warning">Activa</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if asignacion.fecha_devolucion %}
+                                    <span class="badge bg-secondary">Devuelto</span>
+                                {% else %}
+                                    <span class="badge bg-success">En uso</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Imagen del producto -->
+        <div class="detail-section">
+            <h5><i class="fas fa-image me-2"></i>Imagen</h5>
+            {% if producto.imagen %}
+                <img src="{{ producto.imagen.url }}" alt="{{ producto.modelo }}" class="product-image">
+            {% else %}
+                <div class="product-image-placeholder">
+                    <i class="fas fa-image"></i>
+                </div>
+                <p class="text-muted text-center mt-2">Sin imagen disponible</p>
+            {% endif %}
+        </div>
+
+        <!-- Pegatinas identificativas -->
+        <div class="detail-section">
+            <h5><i class="fas fa-tags me-2"></i>Pegatinas Identificativas</h5>
+
+            <!-- Selector de tipos de pegatinas -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Selecciona los Tipos de Pegatinas</label>
+                <div class="pegatina-types">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="QR" id="tipo_qr" checked>
+                        <label class="form-check-label" for="tipo_qr">
+                            <i class="fas fa-qrcode me-2"></i>Código QR
+                            <small class="text-muted d-block">Código QR con información del producto</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="CODIGO_BARRAS" id="tipo_barras">
+                        <label class="form-check-label" for="tipo_barras">
+                            <i class="fas fa-barcode me-2"></i>Código de Barras
+                            <small class="text-muted d-block">Código de barras estándar</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="ETIQUETA_SIMPLE" id="tipo_simple">
+                        <label class="form-check-label" for="tipo_simple">
+                            <i class="fas fa-tag me-2"></i>Etiqueta Simple
+                            <small class="text-muted d-block">Etiqueta con información básica</small>
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="ETIQUETA_COMPLETA" id="tipo_completa">
+                        <label class="form-check-label" for="tipo_completa">
+                            <i class="fas fa-id-card me-2"></i>Etiqueta Completa
+                            <small class="text-muted d-block">Etiqueta con toda la información del producto</small>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contenedor de pegatinas existentes -->
+            <div id="pegatinasContainer">
+                <div class="text-center">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p class="text-muted">Cargando pegatinas...</p>
+                </div>
+            </div>
+
+            <div class="mt-3 d-grid gap-2">
+                <button class="btn btn-primary" onclick="generarPegatinasSeleccionadas()">
+                    <i class="fas fa-plus me-2"></i>Generar Pegatinas Seleccionadas
+                </button>
+                <button class="btn btn-outline-info" onclick="generarQRRapido()">
+                    <i class="fas fa-qrcode me-2"></i>Generar QR Rápido
+                </button>
+                <a href="{% url 'productos:ver_pegatinas' producto.id %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-eye me-2"></i>Ver Todas las Pegatinas
+                </a>
+            </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="detail-section">
+            <h5><i class="fas fa-tools me-2"></i>Acciones Rápidas</h5>
+            <div class="d-grid gap-2">
+                <a href="{% url 'productos:editar_producto' producto.id %}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit me-2"></i>Editar Producto
+                </a>
+                {% if producto.estado == 'DISPONIBLE' %}
+                <button class="btn btn-outline-success" onclick="alert('Funcionalidad de asignación pendiente de implementar')">
+                    <i class="fas fa-hand-holding me-2"></i>Asignar Producto
+                </button>
+                {% endif %}
+                <button class="btn btn-outline-info" onclick="generarQRRapido()">
+                    <i class="fas fa-qrcode me-2"></i>Generar QR Rápido
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Cargar pegatinas al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+    cargarPegatinas();
+});
+
+function cargarPegatinas() {
+    const productoId = {{ producto.id }};
+
+    fetch(`/productos/${productoId}/pegatinas/`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Extraer información de pegatinas del HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const pegatinasCards = doc.querySelectorAll('.pegatina-card');
+
+        let pegatinasHTML = '';
+
+        if (pegatinasCards.length > 0) {
+            pegatinasHTML += `<p class="text-success mb-3">
+                <i class="fas fa-check-circle me-2"></i>
+                ${pegatinasCards.length} pegatina(s) disponible(s)
+            </p>`;
+
+            // Mostrar máximo 3 pegatinas en el detalle
+            for (let i = 0; i < Math.min(3, pegatinasCards.length); i++) {
+                const card = pegatinasCards[i];
+                const qrImg = card.querySelector('.pegatina-preview img');
+
+                // Extraer tipo de pegatina del badge
+                const tipoBadge = card.querySelector('.tipo-badge');
+                const tipoTexto = tipoBadge ? tipoBadge.textContent.trim() : 'Pegatina';
+
+                // Extraer fecha de generación
+                const fechaElement = card.querySelector('.row .col-sm-6 small');
+                const fechaTexto = fechaElement ? fechaElement.textContent.trim() : 'Fecha no disponible';
+
+                // Determinar el icono según el tipo
+                let icono = 'fas fa-qrcode';
+                if (tipoTexto.toLowerCase().includes('barras')) {
+                    icono = 'fas fa-barcode';
+                } else if (tipoTexto.toLowerCase().includes('simple')) {
+                    icono = 'fas fa-tag';
+                } else if (tipoTexto.toLowerCase().includes('completa')) {
+                    icono = 'fas fa-id-card';
+                }
+
+                pegatinasHTML += `
+                    <div class="pegatina-card">
+                        <div>
+                            <span class="badge bg-success">${tipoTexto}</span>
+                            <small class="text-muted d-block">
+                                ${fechaTexto}
+                            </small>
+                        </div>
+                        <div>
+                            ${qrImg ? `<img src="${qrImg.src}" class="qr-preview" alt="${tipoTexto}">` : `<i class="${icono} text-primary fa-2x"></i>`}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (pegatinasCards.length > 3) {
+                pegatinasHTML += `<small class="text-muted">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    Y ${pegatinasCards.length - 3} pegatina(s) más...
+                </small>`;
+            }
+        } else {
+            pegatinasHTML = `
+                <div class="text-center">
+                    <i class="fas fa-tag text-muted mb-2" style="font-size: 3rem;"></i>
+                    <p class="text-muted">No hay pegatinas generadas</p>
+                    <small class="text-muted">Genera la primera pegatina para este producto</small>
+                </div>
+            `;
+        }
+
+        document.getElementById('pegatinasContainer').innerHTML = pegatinasHTML;
+    })
+    .catch(error => {
+        console.error('Error cargando pegatinas:', error);
+        document.getElementById('pegatinasContainer').innerHTML = `
+            <div class="text-center">
+                <i class="fas fa-exclamation-triangle text-warning mb-2"></i>
+                <p class="text-muted">Error al cargar pegatinas</p>
+                <small class="text-muted">Intenta recargar la página</small>
+            </div>
+        `;
+    });
+}
+
+function generarQRRapido() {
+    const productoId = {{ producto.id }};
+
+    // Mostrar loading
+    const container = document.getElementById('pegatinasContainer');
+    container.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p class="text-muted">Generando QR...</p>
+        </div>
+    `;
+
+    // Realizar petición para generar pegatina
+    fetch(`/productos/${productoId}/generar-pegatinas/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Recargar las pegatinas
+            setTimeout(() => {
+                cargarPegatinas();
+            }, 1000);
+
+            // Mostrar mensaje de éxito
+            alert('¡Pegatina QR generada correctamente!');
+        } else {
+            throw new Error('Error al generar pegatina');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al generar la pegatina QR');
+        cargarPegatinas(); // Recargar estado anterior
+    });
+}
+
+function generarPegatinasSeleccionadas() {
+    const productoId = {{ producto.id }};
+    const tiposSeleccionados = Array.from(document.querySelectorAll('.pegatina-types .form-check-input:checked'))
+        .map(checkbox => checkbox.value);
+
+    if (tiposSeleccionados.length === 0) {
+        return alert('Selecciona al menos un tipo de pegatina para generar.');
+    }
+
+    // Mostrar loading
+    const container = document.getElementById('pegatinasContainer');
+    container.innerHTML = `
+        <div class="text-center">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p class="text-muted">Generando pegatinas...</p>
+        </div>
+    `;
+
+    // Realizar petición para generar pegatinas
+    fetch(`/productos/${productoId}/generar-pegatinas/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: JSON.stringify({ tipos: tiposSeleccionados }),
+    })
+    .then(response => {
+        if (response.ok) {
+            // Recargar las pegatinas
+            setTimeout(() => {
+                cargarPegatinas();
+            }, 1000);
+
+            // Mostrar mensaje de éxito
+            alert('¡Pegatinas generadas correctamente!');
+        } else {
+            throw new Error('Error al generar pegatinas');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al generar las pegatinas');
+        cargarPegatinas(); // Recargar estado anterior
+    });
+}
+</script>
+{% endblock %}

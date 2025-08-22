@@ -1,0 +1,823 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Inventario{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/static/img/favicon.ico">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1a237e;
+            --primary-light: #3949ab;
+            --primary-dark: #0d133d;
+            --success: #43a047;
+            --info: #1976d2;
+            --warning: #fbc02d;
+            --danger: #e53935;
+            --gray-bg: #f4f6fa;
+            --gray-light: #e3e6ef;
+            --gray-dark: #374151;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+        }
+
+        body {
+            background-color: var(--gray-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Contenedor principal que crece para empujar el footer */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container-main {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            padding: 2.5rem;
+            margin: 2rem auto;
+            max-width: 1700px;
+            width: 98%;
+            flex: 1;
+        }
+
+        /* Navbar personalizada */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%) !important;
+            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+            padding: 1rem 0;
+            position: relative;
+            z-index: 1000;
+            border-bottom: 3px solid var(--primary-dark);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: white !important;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .navbar-brand:hover {
+            color: white !important;
+            transform: scale(1.05);
+        }
+
+        .navbar-brand i {
+            color: #fff;
+            font-size: 1.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.4rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-brand:hover i {
+            background: rgba(255, 255, 255, 0.2);
+            transform: rotate(5deg);
+        }
+
+        .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            padding: 0.7rem 1.2rem !important;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            margin: 0 0.15rem;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-nav .nav-link i {
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .navbar-nav .nav-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            color: white !important;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.2);
+        }
+
+        .navbar-nav .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .navbar-nav .nav-link:hover i {
+            transform: scale(1.2);
+        }
+
+        .navbar-nav .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(255, 255, 255, 0.25);
+            transform: translateY(-1px);
+        }
+
+        /* Dropdown mejorado */
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            border-radius: 15px;
+            padding: 1rem 0;
+            margin-top: 0.5rem;
+            backdrop-filter: blur(15px);
+            background: rgba(255, 255, 255, 0.98);
+            animation: dropdownSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            min-width: 250px;
+            border-top: 3px solid var(--primary);
+        }
+
+        @keyframes dropdownSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-15px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .dropdown-item {
+            padding: 0.8rem 1.5rem;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 0.15rem 1rem;
+            position: relative;
+            overflow: hidden;
+            color: var(--gray-dark);
+            border: none;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 500;
+        }
+
+        .dropdown-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(26, 35, 126, 0.1), transparent);
+            transition: left 0.4s ease;
+            z-index: 0;
+        }
+
+        .dropdown-item:hover {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.2);
+        }
+
+        .dropdown-item:hover::before {
+            left: 100%;
+        }
+
+        .dropdown-item:focus {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            outline: none;
+            box-shadow: 0 4px 15px rgba(26, 35, 126, 0.2);
+        }
+
+        .dropdown-item:active {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            transform: translateX(3px);
+        }
+
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            font-size: 1.1rem;
+        }
+
+        .dropdown-divider {
+            margin: 0.5rem 1rem;
+            border-top: 1px solid var(--gray-300);
+        }
+
+        .dropdown-header {
+            padding: 0.5rem 1.5rem;
+            margin: 0.5rem 1rem 0.25rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--gray-300);
+            border-radius: 8px 8px 0 0;
+            background: none;
+            transition: color 0.3s;
+        }
+
+        .dropdown-header:hover, .dropdown-header:focus {
+            color: var(--primary-light);
+            background: none;
+        }
+
+        .dropdown-item.text-danger {
+            color: var(--danger) !important;
+        }
+
+        .dropdown-item.text-danger:hover {
+            background: linear-gradient(135deg, var(--danger) 0%, #ff5252 100%);
+            color: white !important;
+        }
+
+        /* Badge para notificaciones */
+        .notification-badge {
+            position: absolute;
+            top: 0.3rem;
+            right: 0.3rem;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+
+        /* User dropdown especial */
+        .user-dropdown .dropdown-menu {
+            min-width: 200px;
+        }
+
+        .user-info {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--gray-300);
+            background: var(--gray-50);
+            margin-bottom: 0.5rem;
+        }
+
+        .user-info h6 {
+            margin: 0;
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .user-info small {
+            color: var(--gray-600);
+        }
+
+        /* Responsive mejoras */
+        @media (max-width: 991px) {
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem !important;
+                margin: 0.1rem 0;
+            }
+
+            .dropdown-menu {
+                position: static !important;
+                transform: none !important;
+                box-shadow: none;
+                border: 1px solid var(--gray-300);
+                margin-top: 0.5rem;
+            }
+        }
+
+        /* Efecto de scroll */
+        .navbar.scrolled {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%) !important;
+            box-shadow: 0 8px 25px rgba(26, 35, 126, 0.4);
+        }
+
+        /* Toggler mejorado */
+        .navbar-toggler {
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 0.75rem;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .navbar-toggler:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.05);
+        }
+
+        .navbar-toggler:focus {
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+        }
+
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+        }
+
+        /* Animaciones */
+        .navbar-collapse {
+            transition: all 0.3s ease;
+        }
+
+        .navbar-nav {
+            align-items: center;
+        }
+
+        @media (min-width: 992px) {
+            .navbar-nav {
+                gap: 0.25rem;
+            }
+        }
+
+        /* Cards personalizadas */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: white;
+            font-weight: 600;
+            padding: 1.5rem;
+            border-bottom: none;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Footer personalizado */
+        .footer {
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-top: auto;
+        }
+
+        .footer small {
+            opacity: 0.8;
+        }
+
+        /* Breadcrumb personalizado */
+        .breadcrumb {
+            background: var(--gray-light);
+            border-radius: 10px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .breadcrumb-item a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-dark);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--gray-dark);
+            font-weight: 600;
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .container-main {
+                margin: 1rem;
+                padding: 1rem;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navegación -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'core:dashboard' %}">
+                <img src="/static/img/img_inventario.png" alt="Logo" style="height: 5rem; margin-right: 0.75rem;">
+                Sistema de Inventario
+            </a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'core:dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="inventarioDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-boxes"></i> Inventario
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'core:inventario_categoria' %}">
+                                <i class="fas fa-tags"></i> Por Categoría
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:inventario_departamento' %}">
+                                <i class="fas fa-building"></i> Por Departamento
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'productos:lista_productos' %}">
+                                <i class="fas fa-list"></i> Lista de Productos
+                            </a></li>
+                             <li><a class="dropdown-item" href="{% url 'productos:agregar_producto' %}">
+                                <i class="fas fa-plus"></i> Agregar Producto
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="asignacionesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-exchange-alt"></i> Asignaciones
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'asignaciones:agregar_asignacion' %}">
+                                <i class="fas fa-plus-circle"></i> Nueva Asignación
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'asignaciones:lista_asignaciones' %}?estado=activas">
+                                <i class="fas fa-undo"></i> Devolver Asignación
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'asignaciones:lista_asignaciones' %}">
+                                <i class="fas fa-history"></i> Historial Completo
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'asignaciones:movimientos_stock' %}">
+                                <i class="fas fa-truck"></i> Movimientos de Stock
+                            </a></li>
+                        </ul>
+                    </li>
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="configDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cogs"></i> Configuración
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><h6 class="dropdown-header">
+                                <i class="fas fa-database me-2"></i>Datos Maestros
+                            </h6></li>
+                            <li><a class="dropdown-item" href="{% url 'core:gestionar_categorias' %}">
+                                <i class="fas fa-tags"></i> Categorías
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:gestionar_marcas' %}">
+                                <i class="fas fa-trademark"></i> Marcas
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:gestionar_departamentos' %}">
+                                <i class="fas fa-building"></i> Departamentos
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:gestionar_empleados' %}">
+                                <i class="fas fa-users"></i> Empleados
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><h6 class="dropdown-header">
+                                <i class="fas fa-cog me-2"></i>Sistema
+                            </h6></li>
+                            <li><a class="dropdown-item" href="{% url 'core:gestionar_proveedores' %}">
+                                <i class="fas fa-truck"></i> Proveedores
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'core:gestionar_ubicaciones' %}">
+                                <i class="fas fa-map-marker-alt"></i> Ubicaciones
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown user-dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user-circle"></i> {{ user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li class="user-info">
+                                    <h6>{{ user.get_full_name|default:user.username }}</h6>
+                                    <small class="text-muted">{{ user.email|default:"Usuario del sistema" }}</small>
+                                </li>
+                                <li><a class="dropdown-item" href="{% url 'core:dashboard' %}">
+                                    <i class="fas fa-tachometer-alt"></i> Mi Dashboard
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'core:admin_panel' %}">
+                                    <i class="fas fa-tools"></i> Panel de Administración
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item text-danger" href="{% url 'core:logout' %}">
+                                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                                </a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'core:login' %}">
+                                <i class="fas fa-sign-in-alt"></i> Iniciar Sesión
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mensajes -->
+    {% if messages %}
+        <div class="container mt-3" id="djangoMessages">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-none" role="alert" data-message-type="{{ message.tags }}" data-message-text="{{ message }}">
+                    <i class="fas fa-info-circle me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Contenido principal -->
+    <div class="container">
+        {% block breadcrumb %}{% endblock %}
+
+        <main class="main-wrapper">
+            <div class="container-main">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">
+                        <i class="fas fa-copyright me-2"></i>
+                        2025 Sistema de Inventario - Departamento de Informática
+                    </p>
+                </div>
+                <div class="col-md-6 text-end">
+                    <small>
+                        <i class="fas fa-code me-2"></i>
+                        Versión 1.0 - Desarrollado con Django
+                    </small>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript personalizado -->
+    <script>
+        // Inicializar tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        // Efecto de scroll en navbar
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) {
+                document.querySelector('.navbar').classList.add('scrolled');
+            } else {
+                document.querySelector('.navbar').classList.remove('scrolled');
+            }
+        });
+
+        // Auto-cerrar alerts después de 5 segundos
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                var alerts = document.querySelectorAll('.alert.alert-dismissible');
+                alerts.forEach(function(alert) {
+                    var closeButton = alert.querySelector('.btn-close');
+                    if (closeButton) {
+                        closeButton.click();
+                    }
+                });
+            }, 5000);
+        });
+
+        // Sistema de manejo de errores con popups
+        function mostrarErrorPopup(titulo, mensaje) {
+            // Crear el modal dinámicamente (sin aria-hidden inicial)
+            const modalHtml = `
+                <div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header bg-danger text-white">
+                                <h5 class="modal-title" id="errorModalLabel">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>${titulo}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-3">
+                                    <i class="fas fa-times-circle text-danger fa-3x"></i>
+                                </div>
+                                <p class="text-center mb-0">${mensaje}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="fas fa-times me-2"></i>Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Eliminar modal existente si lo hay
+            const existingModal = document.getElementById('errorModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            // Agregar el modal al body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+            // Mostrar el modal
+            const modalElement = document.getElementById('errorModal');
+            const modal = new bootstrap.Modal(modalElement);
+
+            // Manejar eventos de accesibilidad correctamente
+            modalElement.addEventListener('show.bs.modal', function() {
+                // Asegurar que aria-hidden se elimine antes de mostrar
+                this.removeAttribute('aria-hidden');
+            });
+
+            modalElement.addEventListener('shown.bs.modal', function() {
+                // Enfocar el primer botón para mejorar accesibilidad
+                const firstButton = this.querySelector('.btn');
+                if (firstButton) {
+                    firstButton.focus();
+                }
+            });
+
+            modalElement.addEventListener('hide.bs.modal', function() {
+                // Restaurar aria-hidden cuando se oculta
+                this.setAttribute('aria-hidden', 'true');
+            });
+
+            // Limpiar el modal después de cerrarlo
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+
+            modal.show();
+        }
+
+        // Función para mostrar popup de éxito
+        function mostrarExitoPopup(titulo, mensaje) {
+            const modalHtml = `
+                <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header bg-success text-white">
+                                <h5 class="modal-title" id="successModalLabel">
+                                    <i class="fas fa-check-circle me-2"></i>${titulo}
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="text-center mb-3">
+                                    <i class="fas fa-check-circle text-success fa-3x"></i>
+                                </div>
+                                <p class="text-center mb-0">${mensaje}</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-success" data-bs-dismiss="modal">
+                                    <i class="fas fa-check me-2"></i>Aceptar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const existingModal = document.getElementById('successModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            const modalElement = document.getElementById('successModal');
+            const modal = new bootstrap.Modal(modalElement);
+
+            // Manejar eventos de accesibilidad para el modal de éxito
+            modalElement.addEventListener('show.bs.modal', function() {
+                this.removeAttribute('aria-hidden');
+            });
+
+            modalElement.addEventListener('shown.bs.modal', function() {
+                const firstButton = this.querySelector('.btn');
+                if (firstButton) {
+                    firstButton.focus();
+                }
+            });
+
+            modalElement.addEventListener('hide.bs.modal', function() {
+                this.setAttribute('aria-hidden', 'true');
+            });
+
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                this.remove();
+            });
+
+            modal.show();
+        }
+
+        // Interceptar errores de navegación
+        window.addEventListener('error', function(e) {
+            console.error('Error capturado:', e.error);
+            mostrarErrorPopup('Error del Sistema', 'Ha ocurrido un error inesperado. Por favor, inténtelo de nuevo.');
+        });
+
+        // Interceptar errores de fetch/ajax
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Promise rechazada:', e.reason);
+            mostrarErrorPopup('Error de Conexión', 'No se pudo completar la operación. Verifique su conexión.');
+        });
+
+        // Mostrar mensajes de Django procesados por JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            const djangoMessages = document.getElementById('djangoMessages');
+            if (djangoMessages) {
+                djangoMessages.querySelectorAll('.alert').forEach(alert => {
+                    const messageType = alert.getAttribute('data-message-type');
+                    const messageText = alert.getAttribute('data-message-text');
+
+                    // Mostrar el mensaje correspondiente en el popup
+                    if (messageType && messageText) {
+                        if (messageType.includes('success')) {
+                            mostrarExitoPopup('Éxito', messageText);
+                        } else {
+                            mostrarErrorPopup('Error', messageText);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

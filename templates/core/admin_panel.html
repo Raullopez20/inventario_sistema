@@ -1,0 +1,1402 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3f51b5;
+        --primary-dark: #0d47a1;
+        --success: #28a745;
+        --warning: #ffc107;
+        --danger: #dc3545;
+        --info: #17a2b8;
+        --gray-100: #f8f9fa;
+        --gray-200: #e9ecef;
+        --gray-300: #dee2e6;
+        --gray-600: #6c757d;
+        --gray-700: #495057;
+        --gray-800: #343a40;
+        --border-radius: 12px;
+        --box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --box-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.15);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Layout Principal */
+    .admin-wrapper {
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border-left: 5px solid var(--primary);
+    }
+
+    .admin-header h1 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin: 0;
+        font-size: 2.2rem;
+    }
+
+    .admin-header .subtitle {
+        color: var(--gray-600);
+        margin-top: 0.5rem;
+        font-size: 1.1rem;
+    }
+
+    .system-status {
+        background: linear-gradient(135deg, var(--success) 0%, #4caf50 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--box-shadow);
+    }
+
+    .system-status h5 {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .system-status .status-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: white;
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    /* Tarjetas de Estadísticas */
+    .stats-container {
+        margin-bottom: 3rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        text-align: center;
+        box-shadow: var(--box-shadow);
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+        border-top: 4px solid var(--primary);
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent 0%, rgba(26, 35, 126, 0.03) 100%);
+        pointer-events: none;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--box-shadow-hover);
+    }
+
+    .stat-card.success { border-top-color: var(--success); }
+    .stat-card.warning { border-top-color: var(--warning); }
+    .stat-card.info { border-top-color: var(--info); }
+    .stat-card.danger { border-top-color: var(--danger); }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary);
+    }
+
+    .stat-card.success .stat-icon { color: var(--success); }
+    .stat-card.warning .stat-icon { color: var(--warning); }
+    .stat-card.info .stat-icon { color: var(--info); }
+    .stat-card.danger .stat-icon { color: var(--danger); }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        color: var(--gray-800);
+        margin: 0;
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: var(--gray-600);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.9rem;
+        letter-spacing: 0.5px;
+        margin-top: 0.5rem;
+    }
+
+    /* Secciones Principales */
+    .section-card {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        overflow: hidden;
+        margin-bottom: 2rem;
+    }
+
+    .section-header {
+        background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-200) 100%);
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--gray-300);
+    }
+
+    .section-title {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin: 0;
+        font-size: 1.4rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .section-content {
+        padding: 2rem;
+    }
+
+    /* Gestión de Datos Maestros */
+    .management-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .management-item {
+        background: var(--gray-100);
+        border: 2px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        transition: var(--transition);
+        position: relative;
+    }
+
+    .management-item:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: var(--box-shadow);
+    }
+
+    .management-item.categories { border-left: 4px solid var(--primary); }
+    .management-item.departments { border-left: 4px solid var(--success); }
+    .management-item.brands { border-left: 4px solid var(--info); }
+    .management-item.employees { border-left: 4px solid var(--warning); }
+
+    .management-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .management-header h6 {
+        color: var(--gray-800);
+        font-weight: 600;
+        margin: 0;
+        font-size: 1.1rem;
+    }
+
+    .management-icon {
+        font-size: 1.3rem;
+        color: var(--primary);
+    }
+
+    .management-item.categories .management-icon { color: var(--primary); }
+    .management-item.departments .management-icon { color: var(--success); }
+    .management-item.brands .management-icon { color: var(--info); }
+    .management-item.employees .management-icon { color: var(--warning); }
+
+    .management-stat {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-300);
+        margin-bottom: 1rem;
+    }
+
+    .management-stat:last-of-type {
+        border-bottom: none;
+    }
+
+    .stat-badge {
+        background: var(--primary);
+        color: white;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        min-width: 35px;
+        text-align: center;
+    }
+
+    .management-item.categories .stat-badge { background: var(--primary); }
+    .management-item.departments .stat-badge { background: var(--success); }
+    .management-item.brands .stat-badge { background: var(--info); }
+    .management-item.employees .stat-badge { background: var(--warning); }
+
+    .management-actions {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .btn-management {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border: 2px solid transparent;
+        font-weight: 600;
+        transition: var(--transition);
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .btn-management:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    /* Actividad Reciente */
+    .activity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .activity-column h6 {
+        color: var(--gray-700);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-300);
+    }
+
+    .activity-item {
+        background: var(--gray-100);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        border-left: 4px solid var(--primary-light);
+        transition: var(--transition);
+    }
+
+    .activity-item:hover {
+        transform: translateX(8px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border-left-color: var(--primary);
+    }
+
+    .activity-item strong {
+        color: var(--gray-800);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+
+    .activity-item small {
+        color: var(--gray-600);
+        font-size: 0.85rem;
+    }
+
+    /* Acciones Rápidas */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .quick-action {
+        background: white;
+        border: 2px solid var(--gray-200);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+        transition: var(--transition);
+        text-decoration: none;
+        color: var(--gray-700);
+        display: block;
+    }
+
+    .quick-action:hover {
+        border-color: var(--primary);
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+    }
+
+    .quick-action i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        color: var(--primary);
+        transition: var(--transition);
+    }
+
+    .quick-action:hover i {
+        color: white;
+    }
+
+    .quick-action h6 {
+        margin: 0.5rem 0;
+        font-weight: 600;
+        transition: var(--transition);
+    }
+
+    .quick-action small {
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+
+    /* Herramientas del Sistema */
+    .system-tools {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .tool-btn {
+        padding: 1rem;
+        border-radius: 8px;
+        border: 2px solid var(--gray-200);
+        background: white;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        text-decoration: none;
+        color: var(--gray-700);
+        font-weight: 500;
+    }
+
+    .tool-btn:hover {
+        border-color: var(--primary);
+        background: var(--gray-50);
+        transform: translateX(5px);
+        color: var(--primary);
+        text-decoration: none;
+    }
+
+    .tool-btn i {
+        font-size: 1.2rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Alertas y Notificaciones */
+    .alerts-list {
+        display: grid;
+        gap: 1rem;
+    }
+
+    .alert-item {
+        background: var(--gray-100);
+        border-radius: 8px;
+        padding: 1rem;
+        border-left: 4px solid var(--info);
+        transition: var(--transition);
+    }
+
+    .alert-item:hover {
+        background: white;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .alert-item.warning {
+        border-left-color: var(--warning);
+        background: rgba(245, 124, 0, 0.05);
+    }
+
+    .alert-item.info {
+        border-left-color: var(--info);
+        background: rgba(2, 119, 189, 0.05);
+    }
+
+    .alert-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .alert-text {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--gray-700);
+    }
+
+    .notification-badge {
+        background: var(--danger);
+        color: white;
+        padding: 0.3rem 0.6rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 25px;
+        text-align: center;
+    }
+
+    /* Resumen de Configuración */
+    .config-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .config-section h6 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-light);
+    }
+
+    .config-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .config-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid var(--gray-300);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--gray-700);
+    }
+
+    .config-list li:last-child {
+        border-bottom: none;
+    }
+
+    .config-list i {
+        color: var(--primary);
+        width: 16px;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .admin-wrapper {
+            padding: 1rem 0;
+        }
+
+        .admin-header {
+            padding: 1.5rem;
+        }
+
+        .admin-header h1 {
+            font-size: 1.8rem;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+        }
+
+        .stat-card {
+            padding: 1.5rem;
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+        }
+
+        .management-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions-grid {
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        }
+
+        .config-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Panel de Administración</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Token CSRF necesario para las peticiones AJAX -->
+{% csrf_token %}
+
+<div class="admin-wrapper">
+    <div class="container-fluid">
+        <!-- Encabezado Principal -->
+        <div class="admin-header">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1>
+                        <i class="fas fa-cogs me-3"></i>Panel de Administración
+                    </h1>
+                    <p class="subtitle mb-0">Gestión completa del sistema de inventario</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-success px-3 py-2 rounded-pill">
+                        <i class="fas fa-check-circle me-2"></i>Sistema Operativo
+                    </span>
+                    <span class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ "now"|date:"d/m/Y H:i" }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Estado del Sistema -->
+        <div class="system-status">
+            <h5><i class="fas fa-server me-2"></i>Estado del Sistema</h5>
+            <div class="status-indicator">
+                <span class="status-dot"></span>
+                <span>Todos los servicios funcionando correctamente</span>
+            </div>
+        </div>
+
+        <!-- Estadísticas Principales -->
+        <div class="stats-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-number">{{ total_usuarios }}</div>
+                    <div class="stat-label">Usuarios Administradores</div>
+                </div>
+
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <i class="fas fa-boxes"></i>
+                    </div>
+                    <div class="stat-number">{{ total_productos }}</div>
+                    <div class="stat-label">Productos Totales</div>
+                </div>
+
+                <div class="stat-card info">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">{{ productos_disponibles }}</div>
+                    <div class="stat-label">Productos Disponibles</div>
+                </div>
+
+                <div class="stat-card warning">
+                    <div class="stat-icon">
+                        <i class="fas fa-handshake"></i>
+                    </div>
+                    <div class="stat-number">{{ total_asignaciones }}</div>
+                    <div class="stat-label">Asignaciones Activas</div>
+                </div>
+
+                <div class="stat-card danger">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div class="stat-number">{{ productos_entregados }}</div>
+                    <div class="stat-label">Productos Entregados</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Gestión de Datos Maestros -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-database"></i>
+                            Gestión de Datos Maestros
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="management-grid">
+                            <div class="management-item categories">
+                                <div class="management-header">
+                                    <i class="fas fa-tags management-icon"></i>
+                                    <h6>Categorías</h6>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Total registradas</span>
+                                    <span class="stat-badge">{{ categorias.count }}</span>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Activas</span>
+                                    <span class="stat-badge">{{ categorias.count }}</span>
+                                </div>
+                                <div class="management-actions">
+                                    <a href="{% url 'core:gestionar_categorias' %}" class="btn btn-primary btn-management">
+                                        <i class="fas fa-cog"></i>Gestionar Categorías
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="management-item departments">
+                                <div class="management-header">
+                                    <i class="fas fa-building management-icon"></i>
+                                    <h6>Departamentos</h6>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Total registrados</span>
+                                    <span class="stat-badge">{{ departamentos.count }}</span>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Activos</span>
+                                    <span class="stat-badge">{{ departamentos.count }}</span>
+                                </div>
+                                <div class="management-actions">
+                                    <a href="{% url 'core:gestionar_departamentos' %}" class="btn btn-success btn-management">
+                                        <i class="fas fa-cog"></i>Gestionar Departamentos
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="management-item brands">
+                                <div class="management-header">
+                                    <i class="fas fa-trademark management-icon"></i>
+                                    <h6>Marcas</h6>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Total registradas</span>
+                                    <span class="stat-badge">{{ total_marcas }}</span>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Activas</span>
+                                    <span class="stat-badge">{{ total_marcas }}</span>
+                                </div>
+                                <div class="management-actions">
+                                    <a href="{% url 'core:gestionar_marcas' %}" class="btn btn-info btn-management">
+                                        <i class="fas fa-cog"></i>Gestionar Marcas
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="management-item employees">
+                                <div class="management-header">
+                                    <i class="fas fa-user-tie management-icon"></i>
+                                    <h6>Empleados</h6>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Total registrados</span>
+                                    <span class="stat-badge">{{ total_empleados }}</span>
+                                </div>
+                                <div class="management-stat">
+                                    <span>Activos</span>
+                                    <span class="stat-badge">{{ total_empleados }}</span>
+                                </div>
+                                <div class="management-actions">
+                                    <a href="{% url 'core:gestionar_empleados' %}" class="btn btn-warning btn-management">
+                                        <i class="fas fa-cog"></i>Gestionar Empleados
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actividad Reciente -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-history"></i>
+                            Actividad Reciente del Sistema
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="activity-grid">
+                            <div class="activity-column">
+                                <h6><i class="fas fa-plus me-2"></i>Productos Agregados Recientemente</h6>
+                                {% for producto in productos_recientes %}
+                                <div class="activity-item">
+                                    <strong>{{ producto.nombre }}</strong>
+                                    <small>
+                                        <i class="fas fa-tag me-1"></i>{{ producto.categoria.nombre }}
+                                        <br>
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ producto.created_at|date:"d/m/Y H:i" }}
+                                        <br>
+                                        <i class="fas fa-circle me-1
+                                           {% if producto.estado == 'DISPONIBLE' %}text-success
+                                           {% elif producto.estado == 'ENTREGADO' %}text-warning
+                                           {% elif producto.estado == 'AVERIADO' %}text-danger
+                                           {% else %}text-secondary{% endif %}"></i>
+                                        {{ producto.get_estado_display }}
+                                    </small>
+                                </div>
+                                {% empty %}
+                                <div class="text-muted text-center py-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No hay productos recientes
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="activity-column">
+                                <h6><i class="fas fa-handshake me-2"></i>Asignaciones Recientes</h6>
+                                {% for asignacion in asignaciones_recientes %}
+                                <div class="activity-item">
+                                    <strong>{{ asignacion.producto.nombre }}</strong>
+                                    <small>
+                                        <i class="fas fa-user me-1"></i>{{ asignacion.empleado_receptor.nombre }}
+                                        <br>
+                                        <i class="fas fa-building me-1"></i>{{ asignacion.departamento.nombre }}
+                                        <br>
+                                        <i class="fas fa-calendar me-1"></i>{{ asignacion.fecha_entrega|date:"d/m/Y" }}
+                                        <br>
+                                        <i class="fas fa-info-circle me-1"></i>{{ asignacion.get_tipo_asignacion_display }}
+                                    </small>
+                                </div>
+                                {% empty %}
+                                <div class="text-muted text-center py-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No hay asignaciones recientes
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="activity-column">
+                                <h6><i class="fas fa-user-plus me-2"></i>Empleados Registrados Recientemente</h6>
+                                {% for empleado in empleados_recientes %}
+                                <div class="activity-item">
+                                    <strong>{{ empleado.nombre }}</strong>
+                                    <small>
+                                        <i class="fas fa-id-card me-1"></i>{{ empleado.dni }}
+                                        <br>
+                                        <i class="fas fa-building me-1"></i>{{ empleado.departamento.nombre }}
+                                        <br>
+                                        <i class="fas fa-calendar me-1"></i>{{ empleado.created_at|date:"d/m/Y" }}
+                                        <br>
+                                        <i class="fas fa-briefcase me-1"></i>{{ empleado.puesto|default:"Sin especificar" }}
+                                    </small>
+                                </div>
+                                {% empty %}
+                                <div class="text-muted text-center py-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No hay empleados recientes
+                                </div>
+                                {% endfor %}
+                            </div>
+
+                            <div class="activity-column">
+                                <h6><i class="fas fa-trademark me-2"></i>Marcas Agregadas Recientemente</h6>
+                                {% for marca in marcas_recientes %}
+                                <div class="activity-item">
+                                    <strong>{{ marca.nombre }}</strong>
+                                    <small>
+                                        <i class="fas fa-calendar me-1"></i>{{ marca.created_at|date:"d/m/Y H:i" }}
+                                        <br>
+                                        <i class="fas fa-circle me-1 {% if marca.activo %}text-success{% else %}text-danger{% endif %}"></i>
+                                        {% if marca.activo %}Activa{% else %}Inactiva{% endif %}
+                                    </small>
+                                </div>
+                                {% empty %}
+                                <div class="text-muted text-center py-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No hay marcas recientes
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Acciones Rápidas -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-bolt"></i>
+                            Acciones Rápidas
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="quick-actions-grid">
+                            <a href="{% url 'productos:agregar_producto' %}" class="quick-action">
+                                <i class="fas fa-plus"></i>
+                                <h6>Agregar Producto</h6>
+                                <small>Registrar nuevo producto</small>
+                            </a>
+
+                            <a href="{% url 'asignaciones:agregar_asignacion' %}" class="quick-action">
+                                <i class="fas fa-handshake"></i>
+                                <h6>Nueva Asignación</h6>
+                                <small>Asignar producto a empleado</small>
+                            </a>
+
+                            <a href="{% url 'core:gestionar_categorias' %}" class="quick-action">
+                                <i class="fas fa-tags"></i>
+                                <h6>Gestionar Categorías</h6>
+                                <small>Administrar categorías</small>
+                            </a>
+
+                            <a href="{% url 'core:gestionar_departamentos' %}" class="quick-action">
+                                <i class="fas fa-building"></i>
+                                <h6>Gestionar Departamentos</h6>
+                                <small>Administrar departamentos</small>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Herramientas del Sistema -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-tools"></i>
+                            Herramientas del Sistema
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="system-tools">
+                            <button class="tool-btn" onclick="generarBackup()">
+                                <i class="fas fa-download"></i>
+                                Generar Backup del Sistema
+                            </button>
+
+                            <button class="tool-btn" onclick="exportarDatos()">
+                                <i class="fas fa-file-export"></i>
+                                Exportar Datos
+                            </button>
+
+                            <button class="tool-btn" onclick="limpiarCache()">
+                                <i class="fas fa-broom"></i>
+                                Limpiar Caché del Sistema
+                            </button>
+
+                            <button class="tool-btn" onclick="generarReporte()">
+                                <i class="fas fa-chart-line"></i>
+                                Generar Reporte de Inventario
+                            </button>
+
+                            <a href="/admin/" class="tool-btn">
+                                <i class="fas fa-cogs"></i>
+                                Acceder a Admin Django
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alertas y Notificaciones -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-bell"></i>
+                            Alertas y Notificaciones
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="alerts-list">
+                            <div class="alert-item info">
+                                <div class="alert-content">
+                                    <div class="alert-text">
+                                        <i class="fas fa-info-circle"></i>
+                                        <div>
+                                            <strong>Sistema Actualizado</strong>
+                                            <br><small>Última actualización: Hoy</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert-item">
+                                <div class="alert-content">
+                                    <div class="alert-text">
+                                        <i class="fas fa-shield-alt"></i>
+                                        <span>Garantías por vencer</span>
+                                    </div>
+                                    <span class="notification-badge">0</span>
+                                </div>
+                            </div>
+
+                            <div class="alert-item">
+                                <div class="alert-content">
+                                    <div class="alert-text">
+                                        <i class="fas fa-clock"></i>
+                                        <span>Asignaciones pendientes</span>
+                                    </div>
+                                    <span class="notification-badge">0</span>
+                                </div>
+                            </div>
+
+                            <div class="alert-item warning">
+                                <div class="alert-content">
+                                    <div class="alert-text">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <span>Productos con problemas</span>
+                                    </div>
+                                    <span class="notification-badge">0</span>
+                                </div>
+                            </div>
+
+                            <div class="alert-item">
+                                <div class="alert-content">
+                                    <div class="alert-text">
+                                        <i class="fas fa-user-clock"></i>
+                                        <span>Empleados inactivos</span>
+                                    </div>
+                                    <span class="notification-badge">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resumen General del Sistema -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Resumen General del Sistema
+                        </h3>
+                    </div>
+                    <div class="section-content">
+                        <div class="config-grid">
+                            <div class="config-section">
+                                <h6><i class="fas fa-database me-2"></i>Datos Maestros</h6>
+                                <ul class="config-list">
+                                    <li>
+                                        <i class="fas fa-tags"></i>
+                                        {{ categorias.count }} Categorías registradas
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-building"></i>
+                                        {{ departamentos.count }} Departamentos activos
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-trademark"></i>
+                                        {{ total_marcas }} Marcas configuradas
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-user-tie"></i>
+                                        {{ total_empleados }} Empleados registrados
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="config-section">
+                                <h6><i class="fas fa-boxes me-2"></i>Inventario</h6>
+                                <ul class="config-list">
+                                    <li>
+                                        <i class="fas fa-cubes"></i>
+                                        {{ total_productos }} Productos totales
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-check-circle"></i>
+                                        {{ productos_disponibles }} Productos disponibles
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-user-check"></i>
+                                        {{ productos_entregados }} Productos entregados
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        0 Productos con problemas
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="config-section">
+                                <h6><i class="fas fa-cogs me-2"></i>Sistema</h6>
+                                <ul class="config-list">
+                                    <li>
+                                        <i class="fas fa-users"></i>
+                                        {{ total_usuarios }} Administradores del sistema
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-handshake"></i>
+                                        {{ total_asignaciones }} Asignaciones totales
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-server"></i>
+                                        Sistema operativo
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-shield-alt"></i>
+                                        Backup actualizado
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <div class="config-section">
+                                <h6><i class="fas fa-chart-line me-2"></i>Estadísticas</h6>
+                                <ul class="config-list">
+                                    <li>
+                                        <i class="fas fa-calendar-day"></i>
+                                        Actividad de hoy: {{ productos_recientes|length }} productos
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-trending-up"></i>
+                                        Asignaciones recientes: {{ asignaciones_recientes|length }}
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-percentage"></i>
+                                        Tasa de utilización:
+                                        {% if total_productos > 0 %}
+                                        {{ productos_entregados|floatformat:0 }}%
+                                        {% else %}
+                                        0%
+                                        {% endif %}
+                                    </li>
+                                    <li>
+                                        <i class="fas fa-clock"></i>
+                                        Última actualización: {{ "now"|date:"H:i" }}
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para mostrar progreso de operaciones -->
+<div class="modal fade" id="progressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <h5 id="progressTitle">Procesando...</h5>
+                <p id="progressMessage" class="text-muted mb-0">Por favor espera</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // Funciones del sistema - CONECTADAS CON BACKEND REAL
+    function generarBackup() {
+        Swal.fire({
+            title: '¿Generar Backup?',
+            text: 'Se creará una copia de seguridad completa del sistema',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#1a237e',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, generar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Mostrar loading
+                Swal.fire({
+                    title: 'Generando backup...',
+                    text: 'Por favor espera mientras se completa el proceso',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    showConfirmButton: false
+                });
+
+                // Hacer petición real al backend
+                fetch('{% url "core:generar_backup" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => {
+                    if (response.ok) {
+                        // Descargar el archivo
+                        return response.blob();
+                    } else {
+                        throw new Error('Error al generar backup');
+                    }
+                })
+                .then(blob => {
+                    // Crear enlace de descarga
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    const timestamp = new Date().toISOString().slice(0,19).replace(/[-:]/g, '').replace('T', '_');
+                    a.href = url;
+                    a.download = `backup_sistema_${timestamp}.zip`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    Swal.fire({
+                        title: '¡Backup generado!',
+                        text: 'La copia de seguridad se ha descargado exitosamente',
+                        icon: 'success',
+                        confirmButtonColor: '#28a745'
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo generar el backup: ' + error.message,
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
+    }
+
+    function exportarDatos() {
+        Swal.fire({
+            title: 'Exportar Datos',
+            text: 'Selecciona el tipo y formato de exportación',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#17a2b8',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Productos Excel',
+            cancelButtonText: 'Cancelar',
+            showDenyButton: true,
+            denyButtonText: 'Productos CSV',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                exportarArchivo('productos', 'excel');
+            } else if (result.isDenied) {
+                exportarArchivo('productos', 'csv');
+            }
+        });
+    }
+
+    function exportarArchivo(tipo, formato) {
+        Swal.fire({
+            title: `Exportando ${tipo} a ${formato.toUpperCase()}...`,
+            text: 'Generando archivo de datos',
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false
+        });
+
+        // Crear enlace directo para descarga
+        const url = `{% url "core:exportar_datos" %}?tipo=${tipo}&formato=${formato}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        setTimeout(() => {
+            Swal.fire({
+                title: '¡Archivo generado!',
+                text: `Los datos se han exportado exitosamente a ${formato.toUpperCase()}`,
+                icon: 'success',
+                confirmButtonColor: '#28a745'
+            });
+        }, 2000);
+    }
+
+    function exportarAsignaciones() {
+        exportarArchivo('asignaciones', 'csv');
+    }
+
+    function limpiarCache() {
+        Swal.fire({
+            title: '¿Limpiar Caché?',
+            text: 'Esta acción limpiará toda la caché del sistema',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#ffc107',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, limpiar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Limpiando caché...',
+                    text: 'Por favor espera',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    showConfirmButton: false
+                });
+
+                // Hacer petición real al backend
+                fetch('{% url "core:limpiar_cache" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: '¡Caché limpiado!',
+                            text: `${data.message}. Archivos eliminados: ${data.archivos_eliminados || 0}`,
+                            icon: 'success',
+                            confirmButtonColor: '#28a745'
+                        });
+                    } else {
+                        throw new Error(data.error || 'Error desconocido');
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'No se pudo limpiar la caché: ' + error.message,
+                        icon: 'error',
+                        confirmButtonColor: '#dc3545'
+                    });
+                });
+            }
+        });
+    }
+
+    function generarReporte() {
+        Swal.fire({
+            title: 'Generar Reporte',
+            text: 'Selecciona el formato del reporte',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#28a745',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ver HTML',
+            cancelButtonText: 'Cancelar',
+            showDenyButton: true,
+            denyButtonText: 'Descargar PDF'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Abrir reporte HTML en nueva ventana
+                window.open('{% url "core:generar_reporte_inventario" %}', '_blank');
+                mostrarNotificacion('Reporte abierto en nueva ventana', 'success');
+            } else if (result.isDenied) {
+                Swal.fire({
+                    title: 'Generando reporte PDF...',
+                    text: 'Procesando datos del inventario',
+                    icon: 'info',
+                    allowOutsideClick: false,
+                    showConfirmButton: false
+                });
+
+                // Descargar PDF
+                const url = '{% url "core:generar_reporte_inventario" %}?formato=pdf';
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+
+                setTimeout(() => {
+                    Swal.fire({
+                        title: '¡Reporte generado!',
+                        text: 'El reporte PDF se ha descargado exitosamente',
+                        icon: 'success',
+                        confirmButtonColor: '#28a745'
+                    });
+                }, 3000);
+            }
+        });
+    }
+
+    // Actualizar estadísticas automáticamente
+    function actualizarEstadisticas() {
+        console.log('Actualizando estadísticas del sistema...');
+
+        // Simular actualización visual
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach(card => {
+            card.style.opacity = '0.7';
+            setTimeout(() => {
+                card.style.opacity = '1';
+            }, 500);
+        });
+    }
+
+    // Ejecutar actualización cada 5 minutos
+    setInterval(actualizarEstadisticas, 300000);
+
+    // Animaciones de entrada
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animar estadísticas
+        const statCards = document.querySelectorAll('.stat-card');
+        statCards.forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+
+            setTimeout(() => {
+                card.style.transition = 'all 0.5s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+
+        // Animar secciones
+        const sections = document.querySelectorAll('.section-card');
+        sections.forEach((section, index) => {
+            section.style.opacity = '0';
+            section.style.transform = 'translateY(30px)';
+
+            setTimeout(() => {
+                section.style.transition = 'all 0.6s ease';
+                section.style.opacity = '1';
+                section.style.transform = 'translateY(0)';
+            }, (index + 5) * 150);
+        });
+    });
+
+    // Función para mostrar notificaciones
+    function mostrarNotificacion(mensaje, tipo = 'info') {
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+
+        Toast.fire({
+            icon: tipo,
+            title: mensaje
+        });
+    }
+
+    // Mostrar notificación de bienvenida
+    setTimeout(() => {
+        mostrarNotificacion('Panel de administración cargado correctamente', 'success');
+    }, 1000);
+</script>
+{% endblock %}

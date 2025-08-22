@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}Pegatinas de {{ producto.numero_serie }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pegatinas-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .pegatina-card {
+        background: white;
+        border: 2px solid var(--gray-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .pegatina-card:hover {
+        border-color: var(--primary);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .pegatina-card.impresa {
+        border-color: var(--success);
+        background: linear-gradient(135deg, rgba(67, 160, 71, 0.05) 0%, rgba(102, 187, 106, 0.02) 100%);
+    }
+
+    .pegatina-preview {
+        width: 100%;
+        max-width: 300px;
+        height: 200px;
+        border: 2px solid var(--gray-300);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--gray-50);
+        margin-bottom: 1rem;
+        overflow: hidden;
+    }
+
+    .pegatina-preview img {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .pegatina-preview-placeholder {
+        color: var(--gray-500);
+        text-align: center;
+    }
+
+    .pegatina-preview-placeholder i {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .tipo-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .tipo-qr { background: var(--primary); color: white; }
+    .tipo-codigo_barras { background: var(--info); color: white; }
+    .tipo-etiqueta_simple { background: var(--warning); color: var(--gray-dark); }
+    .tipo-etiqueta_completa { background: var(--success); color: white; }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 10px;
+        text-align: center;
+        border: 2px solid var(--gray-light);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: var(--gray-600);
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:detalle_producto' producto.id %}">{{ producto.numero_serie }}</a></li>
+        <li class="breadcrumb-item active">Pegatinas</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-tags me-2"></i>Pegatinas Identificativas
+    </h2>
+    <div>
+        <a href="{% url 'productos:generar_pegatinas' producto.id %}" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-2"></i>Generar Nueva
+        </a>
+        <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Producto
+        </a>
+    </div>
+</div>
+
+<!-- Información del producto -->
+<div class="alert alert-info">
+    <h5 class="mb-1"><i class="fas fa-box me-2"></i>{{ producto.numero_serie }}</h5>
+    <p class="mb-0">{{ producto.categoria.nombre }} - {{ producto.marca.nombre }} {{ producto.modelo }}</p>
+</div>
+
+<!-- Estadísticas -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">{{ pegatinas|length }}</div>
+        <div>Total</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">{{ pegatinas|length }}</div>
+        <div>Activas</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">0</div>
+        <div>Impresas</div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="pegatinas-section">
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <select class="form-select" id="filtroTipo">
+                <option value="">Todos los tipos</option>
+                <option value="QR">Código QR</option>
+                <option value="CODIGO_BARRAS">Código de Barras</option>
+                <option value="ETIQUETA_SIMPLE">Etiqueta Simple</option>
+                <option value="ETIQUETA_COMPLETA">Etiqueta Completa</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <select class="form-select" id="filtroEstado">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="impresa">Impresa</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Lista de pegatinas -->
+<div class="pegatinas-section">
+    <h5><i class="fas fa-list me-2"></i>Pegatinas Generadas</h5>
+
+    {% if pegatinas %}
+        <div id="pegatinas-container">
+            {% for pegatina in pegatinas %}
+            <div class="pegatina-card {% if pegatina.impresa %}impresa{% endif %}" data-tipo="{{ pegatina.tipo_pegatina }}" data-estado="{% if pegatina.impresa %}impresa{% else %}pendiente{% endif %}">
+                <div class="tipo-badge tipo-{{ pegatina.tipo_pegatina|lower }}">
+                    {{ pegatina.get_tipo_pegatina_display }}
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="pegatina-preview">
+                            {% if pegatina.imagen_pegatina %}
+                                <img src="{{ request.scheme }}://{{ request.get_host }}{{ pegatina.imagen_pegatina.url }}" alt="Vista previa de pegatina" loading="lazy">
+                            {% else %}
+                                <div class="pegatina-preview-placeholder">
+                                    {% if pegatina.tipo_pegatina == 'QR' %}
+                                        <i class="fas fa-qrcode"></i>
+                                    {% elif pegatina.tipo_pegatina == 'CODIGO_BARRAS' %}
+                                        <i class="fas fa-barcode"></i>
+                                    {% elif pegatina.tipo_pegatina == 'ETIQUETA_SIMPLE' %}
+                                        <i class="fas fa-tag"></i>
+                                    {% elif pegatina.tipo_pegatina == 'ETIQUETA_COMPLETA' %}
+                                        <i class="fas fa-id-card"></i>
+                                    {% else %}
+                                        <i class="fas fa-image"></i>
+                                    {% endif %}
+                                    <div>Vista previa no disponible</div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <h6 class="mb-3">Pegatina {{ pegatina.get_tipo_pegatina_display }}</h6>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <strong>Estado:</strong>
+                                {% if pegatina.impresa %}
+                                    <span class="badge bg-success">Impresa</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pendiente</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-6">
+                                <strong>Tipo:</strong> {{ pegatina.get_tipo_pegatina_display }}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-6">
+                                <strong>Generada:</strong><br>
+                                <small>{{ pegatina.fecha_generacion|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <div class="col-sm-6">
+                                <strong>Código:</strong><br>
+                                <small>{{ pegatina.codigo_generado }}</small>
+                            </div>
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button class="btn btn-primary btn-sm" onclick="descargarPegatina({{ pegatina.id }})">
+                                <i class="fas fa-download me-1"></i>Descargar
+                            </button>
+
+                            {% if not pegatina.impresa %}
+                            <button class="btn btn-success btn-sm" onclick="marcarImpresa({{ pegatina.id }})">
+                                <i class="fas fa-print me-1"></i>Marcar Impresa
+                            </button>
+                            {% endif %}
+
+                            <button class="btn btn-danger btn-sm" onclick="eliminarPegatina({{ pegatina.id }})">
+                                <i class="fas fa-trash me-1"></i>Eliminar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-tag"></i>
+            <h5>No hay pegatinas generadas</h5>
+            <p>Aún no se han generado pegatinas para este producto.</p>
+            <a href="{% url 'productos:generar_pegatinas' producto.id %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Generar Primera Pegatina
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Atajos de teclado -->
+<div class="text-center mt-4">
+    <small class="text-muted">
+        <i class="fas fa-keyboard me-1"></i>
+        Atajos: Ctrl+G (Generar pegatinas) | Ctrl+P (Imprimir página)
+    </small>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Atajos de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'g') {
+            e.preventDefault();
+            window.location.href = "{% url 'productos:generar_pegatinas' producto.id %}";
+        }
+        if (e.ctrlKey && e.key === 'p') {
+            e.preventDefault();
+            window.print();
+        }
+    });
+
+    // Filtros
+    document.getElementById('filtroTipo').addEventListener('change', aplicarFiltros);
+    document.getElementById('filtroEstado').addEventListener('change', aplicarFiltros);
+});
+
+function aplicarFiltros() {
+    const filtroTipo = document.getElementById('filtroTipo').value;
+    const filtroEstado = document.getElementById('filtroEstado').value;
+    const cards = document.querySelectorAll('.pegatina-card');
+
+    cards.forEach(card => {
+        const tipo = card.getAttribute('data-tipo');
+        const estado = card.getAttribute('data-estado');
+
+        let mostrar = true;
+
+        if (filtroTipo && tipo !== filtroTipo) {
+            mostrar = false;
+        }
+
+        if (filtroEstado && estado !== filtroEstado) {
+            mostrar = false;
+        }
+
+        card.style.display = mostrar ? 'block' : 'none';
+    });
+}
+
+function descargarPegatina(pegatina_id) {
+    window.open(`/productos/pegatina/${pegatina_id}/descargar/`, '_blank');
+}
+
+function marcarImpresa(pegatina_id) {
+    if (!confirm('¿Marcar esta pegatina como impresa?')) {
+        return;
+    }
+
+    fetch(`/productos/pegatina/${pegatina_id}/marcar-impresa/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al marcar como impresa');
+    });
+}
+
+function eliminarPegatina(pegatina_id) {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta pegatina? Esta acción no se puede deshacer.')) {
+        return;
+    }
+
+    fetch(`/productos/pegatina/${pegatina_id}/eliminar/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al eliminar pegatina');
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,520 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+
+    .return-section {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+    }
+
+    .return-section h5 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-light);
+    }
+
+    .assignment-info {
+        background: var(--gray-bg);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        border-left: 4px solid var(--warning);
+        margin-bottom: 2rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-light);
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--gray-dark);
+    }
+
+    .info-value {
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+
+    .duration-info {
+        background: linear-gradient(135deg, var(--info) 0%, #42a5f5 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        text-align: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        background: #fff;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.13rem rgba(26,35,126,0.13);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .required-field::after {
+        content: ' *';
+        color: var(--danger);
+    }
+
+    .btn-return {
+        background: var(--gradient-primary);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .btn-return:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, var(--gray-dark) 0%, #6b7280 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s;
+        box-shadow: var(--shadow-soft);
+    }
+
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        color: white;
+    }
+
+    .warning-box {
+        background: linear-gradient(135deg, var(--danger) 0%, #ff5252 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+    }
+
+    .checklist-item {
+        background: white;
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .checklist-item.checked {
+        border-color: var(--success);
+        background: rgba(67, 160, 71, 0.05);
+    }
+
+    .checklist-item input[type="checkbox"] {
+        margin-right: 0.5rem;
+        transform: scale(1.2);
+    }
+
+    .product-image {
+        max-width: 150px;
+        max-height: 150px;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow-soft);
+    }
+
+    .product-image-placeholder {
+        width: 150px;
+        height: 150px;
+        background: var(--gray-light);
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-dark);
+        font-size: 2rem;
+    }
+
+    .estado-select {
+        background: var(--gray-bg);
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .alert-info {
+        background: var(--info);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: var(--shadow-soft);
+    }
+
+    @media (max-width: 900px) {
+        .return-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'asignaciones:lista_asignaciones' %}">Asignaciones</a></li>
+        <li class="breadcrumb-item active">Devolver Producto</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-undo me-2"></i>{{ title }}
+    </h2>
+    <div>
+        <a href="{% url 'asignaciones:detalle_asignacion' asignacion.id %}" class="btn btn-outline-info me-2">
+            <i class="fas fa-eye me-2"></i>Ver Detalles
+        </a>
+        <a href="{% url 'asignaciones:lista_asignaciones' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="warning-box">
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    <strong>Importante:</strong> Esta acción procesará la devolución del producto y cambiará su estado a "Disponible".
+    Asegúrate de revisar el estado físico del producto antes de proceder.
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Información de la asignación -->
+        <div class="return-section">
+            <h5><i class="fas fa-info-circle me-2"></i>Información de la Asignación</h5>
+
+            <div class="assignment-info">
+                <div class="info-item">
+                    <span class="info-label">Producto:</span>
+                    <span class="info-value">{{ asignacion.producto.nombre }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Empleado:</span>
+                    <span class="info-value">{{ asignacion.empleado_receptor.nombre }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Departamento:</span>
+                    <span class="info-value">{{ asignacion.departamento.nombre }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Tipo de Asignación:</span>
+                    <span class="info-value">{{ asignacion.get_tipo_asignacion_display }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Fecha de Entrega:</span>
+                    <span class="info-value">{{ asignacion.fecha_entrega|date:"d/m/Y" }}</span>
+                </div>
+
+                <div class="info-item">
+                    <span class="info-label">Asignado por:</span>
+                    <span class="info-value">{{ asignacion.usuario_entrega.username }}</span>
+                </div>
+            </div>
+
+            <div class="duration-info">
+                <h6><i class="fas fa-clock me-2"></i>Tiempo en Uso</h6>
+                <p class="mb-0">{{ asignacion.fecha_entrega|timesince }} desde la entrega</p>
+            </div>
+        </div>
+
+        <!-- Formulario de devolución -->
+        <form method="post" id="returnForm">
+            {% csrf_token %}
+            <div class="return-section">
+                <h5><i class="fas fa-clipboard-check me-2"></i>Datos de Devolución</h5>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha_devolucion" class="form-label required-field">
+                                Fecha de Devolución
+                            </label>
+                            <input type="date" name="fecha_devolucion" id="fecha_devolucion" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="estado_producto" class="form-label required-field">
+                                Estado del Producto al Devolver
+                            </label>
+                            <select name="estado_producto" id="estado_producto" class="form-select" required>
+                                <option value="">Selecciona el estado...</option>
+                                <option value="DISPONIBLE">Disponible (En buen estado)</option>
+                                <option value="AVERIADO">Averiado (Necesita reparación)</option>
+                                <option value="MANTENIMIENTO">Mantenimiento (Requiere revisión)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="observaciones_devolucion" class="form-label">
+                        Observaciones de Devolución
+                    </label>
+                    <textarea name="observaciones_devolucion" id="observaciones_devolucion" class="form-control" rows="4"
+                              placeholder="Describe el estado del producto, observaciones sobre su uso, problemas detectados, etc."></textarea>
+                </div>
+            </div>
+
+            <!-- Lista de verificación -->
+            <div class="return-section">
+                <h5><i class="fas fa-tasks me-2"></i>Lista de Verificación</h5>
+
+                <div class="checklist-item">
+                    <label>
+                        <input type="checkbox" id="check1">
+                        He revisado el estado físico del producto
+                    </label>
+                </div>
+
+                <div class="checklist-item">
+                    <label>
+                        <input type="checkbox" id="check2">
+                        El producto incluye todos los accesorios originales
+                    </label>
+                </div>
+
+                <div class="checklist-item">
+                    <label>
+                        <input type="checkbox" id="check3">
+                        He verificado el funcionamiento del producto
+                    </label>
+                </div>
+
+                <div class="checklist-item">
+                    <label>
+                        <input type="checkbox" id="check4">
+                        El empleado ha entregado el producto personalmente
+                    </label>
+                </div>
+
+                <div class="checklist-item">
+                    <label>
+                        <input type="checkbox" id="check5">
+                        He documentado cualquier problema o daño detectado
+                    </label>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="return-section">
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-return" id="processReturnBtn" disabled>
+                        <i class="fas fa-undo me-2"></i>Procesar Devolución
+                    </button>
+                    <a href="{% url 'asignaciones:lista_asignaciones' %}" class="btn btn-cancel">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <div class="col-lg-4">
+        <!-- Imagen del producto -->
+        <div class="return-section">
+            <h5><i class="fas fa-image me-2"></i>Producto</h5>
+
+            <div class="text-center mb-3">
+                {% if asignacion.producto.imagen %}
+                    <img src="{{ asignacion.producto.imagen.url }}" alt="{{ asignacion.producto.nombre }}" class="product-image">
+                {% else %}
+                    <div class="product-image-placeholder mx-auto">
+                        <i class="fas fa-image"></i>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Categoría:</span>
+                <span class="info-value">{{ asignacion.producto.categoria.nombre }}</span>
+            </div>
+
+            <div class="info-item">
+                <span class="info-label">Marca:</span>
+                <span class="info-value">{{ asignacion.producto.marca.nombre }}</span>
+            </div>
+
+            {% if asignacion.producto.numero_serie %}
+            <div class="info-item">
+                <span class="info-label">N° Serie:</span>
+                <span class="info-value">{{ asignacion.producto.numero_serie }}</span>
+            </div>
+            {% endif %}
+
+            <div class="info-item">
+                <span class="info-label">Ubicación Actual:</span>
+                <span class="info-value">{{ asignacion.producto.ubicacion_actual.nombre }}</span>
+            </div>
+        </div>
+
+        <!-- Información adicional -->
+        <div class="return-section">
+            <h5><i class="fas fa-exclamation-circle me-2"></i>Información Importante</h5>
+
+            {% if asignacion.observaciones_entrega %}
+                <div class="mb-3">
+                    <h6 class="info-label">Observaciones de Entrega:</h6>
+                    <p class="text-muted">{{ asignacion.observaciones_entrega }}</p>
+                </div>
+            {% endif %}
+
+            {% if asignacion.producto.fecha_fin_garantia %}
+                {% now "Y-m-d" as today %}
+                <div class="mb-3">
+                    <h6 class="info-label">Estado de Garantía:</h6>
+                    {% if asignacion.producto.fecha_fin_garantia|date:"Y-m-d" < today %}
+                        <span class="badge" style="background: var(--danger); color: white;">
+                            <i class="fas fa-times me-1"></i>Garantía Vencida
+                        </span>
+                    {% else %}
+                        <span class="badge" style="background: var(--success); color: white;">
+                            <i class="fas fa-check me-1"></i>Garantía Vigente
+                        </span>
+                    {% endif %}
+                    <br><small class="text-muted">Hasta: {{ asignacion.producto.fecha_fin_garantia|date:"d/m/Y" }}</small>
+                </div>
+            {% endif %}
+
+            <div class="alert alert-info">
+                <i class="fas fa-lightbulb me-2"></i>
+                <strong>Consejo:</strong> Si el producto presenta problemas, márcalo como "Averiado" para programar su reparación.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Establecer fecha actual por defecto
+    document.getElementById('fecha_devolucion').value = new Date().toISOString().split('T')[0];
+
+    // Manejar checkboxes de verificación
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const processBtn = document.getElementById('processReturnBtn');
+
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            this.parentElement.parentElement.classList.toggle('checked', this.checked);
+            checkAllValidated();
+        });
+    });
+
+    function checkAllValidated() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const formValid = document.getElementById('fecha_devolucion').value &&
+                         document.getElementById('estado_producto').value;
+
+        processBtn.disabled = !(allChecked && formValid);
+    }
+
+    // Validar formulario
+    document.getElementById('fecha_devolucion').addEventListener('change', checkAllValidated);
+    document.getElementById('estado_producto').addEventListener('change', checkAllValidated);
+
+    // Validación de fecha (no puede ser anterior a la fecha de entrega)
+    document.getElementById('fecha_devolucion').addEventListener('change', function() {
+        const fechaEntrega = new Date('{{ asignacion.fecha_entrega|date:"Y-m-d" }}');
+        const fechaDevolucion = new Date(this.value);
+
+        if (fechaDevolucion < fechaEntrega) {
+            alert('La fecha de devolución no puede ser anterior a la fecha de entrega.');
+            this.value = new Date().toISOString().split('T')[0];
+        }
+    });
+
+    // Validación final antes de enviar el formulario
+    document.getElementById('returnForm').addEventListener('submit', function(e) {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const estadoProducto = document.getElementById('estado_producto').value;
+        let confirmMessage = `¿Confirmar la devolución del producto "{{ asignacion.producto.nombre }}"?\n\n`;
+        confirmMessage += `Estado: ${document.getElementById('estado_producto').options[document.getElementById('estado_producto').selectedIndex].text}\n`;
+
+        if (estadoProducto === 'AVERIADO') {
+            confirmMessage += '\n⚠️ ATENCIÓN: El producto será marcado como AVERIADO y requerirá reparación.';
+        } else if (estadoProducto === 'MANTENIMIENTO') {
+            confirmMessage += '\n🔧 El producto será enviado a mantenimiento preventivo.';
+        }
+
+        if (!allChecked) {
+            alert('Debes completar toda la lista de verificación antes de procesar la devolución.');
+            e.preventDefault();
+            return false;
+        }
+        if (!confirm(confirmMessage)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+</script>
+{% endblock %}

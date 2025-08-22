@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Imprimir Pegatina - {{ producto.numero_serie }}</title>
+    <style>
+        @page {
+            margin: 10mm;
+            size: A4;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+        }
+        .pegatina-print {
+            text-align: center;
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 2px solid #000;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .pegatina-image {
+            margin: 10px 0;
+        }
+        .pegatina-image img {
+            max-width: 300px;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        .pegatina-details {
+            margin-top: 10px;
+            line-height: 1.4;
+        }
+        .producto-info {
+            font-weight: bold;
+            font-size: 14pt;
+            margin-bottom: 10px;
+        }
+        .codigo-info {
+            font-size: 10pt;
+            color: #666;
+            margin-top: 10px;
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="padding: 20px; background: #f0f0f0; text-align: center;">
+        <h3>Pegatina de {{ producto.numero_serie }}</h3>
+        <p>Esta ventana está optimizada para impresión. Use Ctrl+P para imprimir.</p>
+        <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px;">
+            Imprimir Pegatina
+        </button>
+    </div>
+
+    <div class="pegatina-print">
+        <div class="producto-info">
+            {{ producto.numero_serie }}
+        </div>
+
+        <div class="pegatina-image">
+            {% if imagen_url_absoluta %}
+                <img src="{{ imagen_url_absoluta }}" alt="Código {{ pegatina.get_tipo_pegatina_display }}" />
+            {% else %}
+                <div style="border: 1px solid #ccc; padding: 20px; background: #f9f9f9;">
+                    <p>{{ pegatina.get_tipo_pegatina_display }}</p>
+                    <p>{{ pegatina.codigo_generado }}</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="pegatina-details">
+            <strong>{{ producto.categoria.nombre }}</strong><br>
+            {{ producto.marca.nombre }} {{ producto.modelo }}<br>
+            {% if producto.ubicacion %}
+                Ubicación: {{ producto.ubicacion.nombre }}
+            {% endif %}
+        </div>
+
+        <div class="codigo-info">
+            Tipo: {{ pegatina.get_tipo_pegatina_display }}<br>
+            Código: {{ pegatina.codigo_generado }}<br>
+            Generado: {{ pegatina.fecha_generacion|date:"d/m/Y H:i" }}
+        </div>
+    </div>
+
+    <script>
+        // Auto-focus para impresión
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                window.focus();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

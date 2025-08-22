@@ -1,0 +1,377 @@
+{% extends 'base.html' %}
+
+{% block title %}Datos Personalizados - {{ producto.numero_serie }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .form-section h5 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-light);
+    }
+
+    .tipo-producto-info {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        text-align: center;
+    }
+
+    .tipo-producto-info h4 {
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .tipo-producto-info .badge {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        margin-top: 0.5rem;
+        display: inline-block;
+    }
+
+    .campo-personalizado {
+        background: var(--gray-bg);
+        border: 2px solid var(--gray-light);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .campo-personalizado:hover {
+        border-color: var(--primary-light);
+        background: white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .campo-personalizado .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .campo-personalizado .form-label i {
+        color: var(--primary);
+    }
+
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: 10px;
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(57, 73, 171, 0.25);
+    }
+
+    .required-field::after {
+        content: ' *';
+        color: var(--danger);
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, var(--success) 0%, #66bb6a 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 160, 71, 0.3);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(67, 160, 71, 0.4);
+        color: white;
+    }
+
+    .no-tipo-producto {
+        background: var(--gray-light);
+        border-radius: 15px;
+        padding: 3rem;
+        text-align: center;
+        color: var(--gray-dark);
+    }
+
+    .no-tipo-producto i {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: var(--gray-500);
+    }
+
+    .ejemplo-campo {
+        background: rgba(57, 73, 171, 0.05);
+        border-left: 4px solid var(--primary);
+        padding: 1rem;
+        border-radius: 0 10px 10px 0;
+        margin-top: 0.5rem;
+    }
+
+    .ejemplo-campo strong {
+        color: var(--primary-dark);
+    }
+
+    .campo-ayuda {
+        font-size: 0.9rem;
+        color: var(--gray-600);
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:detalle_producto' producto.id %}">{{ producto.numero_serie }}</a></li>
+        <li class="breadcrumb-item active">Datos Personalizados</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-user-cog me-2"></i>Datos Personalizados
+    </h2>
+    <div>
+        <a href="{% url 'productos:generar_pegatinas' producto.id %}" class="btn btn-info me-2">
+            <i class="fas fa-tags me-2"></i>Generar Pegatinas
+        </a>
+        <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Producto
+        </a>
+    </div>
+</div>
+
+<!-- Información del Producto -->
+<div class="form-section">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h5><i class="fas fa-box me-2"></i>{{ producto.numero_serie }}</h5>
+            <p class="text-muted mb-0">{{ producto.categoria.nombre }} - {{ producto.marca.nombre }} {{ producto.modelo }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <span class="badge bg-primary fs-6">{{ producto.get_estado_display }}</span>
+        </div>
+    </div>
+</div>
+
+{% if tipo_producto %}
+    <!-- Información del Tipo de Producto -->
+    <div class="tipo-producto-info">
+        <h4>
+            <i class="fas fa-microchip me-2"></i>{{ tipo_producto.nombre }}
+        </h4>
+        <div class="badge">
+            Prefijo: {{ tipo_producto.codigo_prefijo }}
+        </div>
+        {% if tipo_producto.descripcion %}
+            <p class="mt-2 mb-0">{{ tipo_producto.descripcion }}</p>
+        {% endif %}
+    </div>
+
+    {% if form %}
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-section">
+                <h5><i class="fas fa-edit me-2"></i>Campos Personalizados</h5>
+
+                {% if form.fields %}
+                    <div class="row">
+                        {% for field in form %}
+                            <div class="col-lg-6">
+                                <div class="campo-personalizado">
+                                    <label for="{{ field.id_for_label }}" class="form-label{% if field.field.required %} required-field{% endif %}">
+                                        {% if field.label == 'IMEI 1' or field.label == 'IMEI 2' %}
+                                            <i class="fas fa-mobile-alt"></i>
+                                        {% elif field.label == 'MAC Address' %}
+                                            <i class="fas fa-network-wired"></i>
+                                        {% elif field.label == 'Número de Serie Interno' %}
+                                            <i class="fas fa-barcode"></i>
+                                        {% elif field.label == 'RAM' or field.label == 'Almacenamiento' %}
+                                            <i class="fas fa-memory"></i>
+                                        {% elif field.label == 'Procesador' %}
+                                            <i class="fas fa-microchip"></i>
+                                        {% else %}
+                                            <i class="fas fa-cog"></i>
+                                        {% endif %}
+                                        {{ field.label }}
+                                    </label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <div class="text-danger mt-2">{{ field.errors.0 }}</div>
+                                    {% endif %}
+                                    {% if field.help_text %}
+                                        <div class="campo-ayuda">{{ field.help_text }}</div>
+                                    {% endif %}
+
+                                    <!-- Ejemplos para campos específicos -->
+                                    {% if 'imei' in field.name|lower %}
+                                        <div class="ejemplo-campo">
+                                            <strong>Ejemplo:</strong> 123456789012345 (15 dígitos)
+                                        </div>
+                                    {% elif 'mac' in field.name|lower %}
+                                        <div class="ejemplo-campo">
+                                            <strong>Ejemplo:</strong> 00:1B:44:11:3A:B7
+                                        </div>
+                                    {% elif 'procesador' in field.name|lower %}
+                                        <div class="ejemplo-campo">
+                                            <strong>Ejemplo:</strong> Intel Core i5-12400F
+                                        </div>
+                                    {% elif 'ram' in field.name|lower %}
+                                        <div class="ejemplo-campo">
+                                            <strong>Ejemplo:</strong> 16GB DDR4
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="no-tipo-producto">
+                        <i class="fas fa-info-circle"></i>
+                        <h4>Sin campos personalizados</h4>
+                        <p>Este tipo de producto no tiene campos personalizados configurados.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if form.fields %}
+                <!-- Botones de acción -->
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i>Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-save">
+                        <i class="fas fa-save me-2"></i>Guardar Datos Personalizados
+                    </button>
+                </div>
+            {% endif %}
+        </form>
+    {% endif %}
+
+{% else %}
+    <!-- Sin tipo de producto detectado -->
+    <div class="no-tipo-producto">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h4>Tipo de Producto No Detectado</h4>
+        <p>No se pudo determinar automáticamente el tipo de este producto basado en su categoría.</p>
+        <p class="text-muted">Contacta al administrador para configurar los tipos de productos.</p>
+        <a href="{% url 'productos:detalle_producto' producto.id %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Producto
+        </a>
+    </div>
+{% endif %}
+
+<!-- Información adicional -->
+<div class="form-section">
+    <h5><i class="fas fa-info-circle me-2"></i>¿Qué son los datos personalizados?</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <p>Los datos personalizados son campos específicos que varían según el tipo de producto:</p>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i><strong>Móviles:</strong> IMEI 1, IMEI 2, etc.</li>
+                <li><i class="fas fa-check text-success me-2"></i><strong>Ordenadores:</strong> RAM, Procesador, etc.</li>
+                <li><i class="fas fa-check text-success me-2"></i><strong>Tablets:</strong> Número de serie interno, etc.</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <p>Esta información será incluida en:</p>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-qrcode text-primary me-2"></i>Códigos QR</li>
+                <li><i class="fas fa-tag text-info me-2"></i>Pegatinas identificativas</li>
+                <li><i class="fas fa-file-alt text-warning me-2"></i>Reportes del sistema</li>
+                <li><i class="fas fa-search text-success me-2"></i>Búsquedas avanzadas</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Validaciones específicas para campos
+    document.addEventListener('DOMContentLoaded', function() {
+        // Validación de IMEI (15 dígitos)
+        const imeiFields = document.querySelectorAll('input[name*="imei"]');
+        imeiFields.forEach(field => {
+            field.addEventListener('input', function(e) {
+                const value = e.target.value.replace(/\D/g, ''); // Solo números
+                if (value.length > 15) {
+                    e.target.value = value.substring(0, 15);
+                } else {
+                    e.target.value = value;
+                }
+            });
+        });
+
+        // Validación de MAC Address
+        const macFields = document.querySelectorAll('input[name*="mac"]');
+        macFields.forEach(field => {
+            field.addEventListener('input', function(e) {
+                let value = e.target.value.replace(/[^0-9A-Fa-f]/g, '');
+                if (value.length > 12) {
+                    value = value.substring(0, 12);
+                }
+                // Formatear como XX:XX:XX:XX:XX:XX
+                const formatted = value.match(/.{1,2}/g)?.join(':') || value;
+                if (formatted !== e.target.value) {
+                    e.target.value = formatted;
+                }
+            });
+        });
+
+        // Auto-uppercase para ciertos campos
+        const uppercaseFields = document.querySelectorAll('input[name*="serie"], input[name*="mac"]');
+        uppercaseFields.forEach(field => {
+            field.addEventListener('input', function(e) {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        });
+    });
+
+    // Función para mostrar ayuda contextual
+    function mostrarAyuda(campo) {
+        let mensaje = '';
+        const nombreCampo = campo.toLowerCase();
+
+        if (nombreCampo.includes('imei')) {
+            mensaje = 'IMEI: Identidad Internacional de Equipo Móvil. Debe tener exactamente 15 dígitos.';
+        } else if (nombreCampo.includes('mac')) {
+            mensaje = 'MAC Address: Dirección física de la tarjeta de red. Formato: XX:XX:XX:XX:XX:XX';
+        } else if (nombreCampo.includes('ram')) {
+            mensaje = 'RAM: Memoria de acceso aleatorio. Ejemplo: 8GB DDR4, 16GB DDR5';
+        } else if (nombreCampo.includes('procesador')) {
+            mensaje = 'Procesador: Unidad central de procesamiento. Ejemplo: Intel Core i5-12400F';
+        }
+
+        if (mensaje) {
+            alert(mensaje);
+        }
+    }
+</script>
+{% endblock %}

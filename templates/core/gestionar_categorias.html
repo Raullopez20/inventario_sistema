@@ -1,0 +1,769 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Categorías - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        transform: translate(-40px, 40px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .page-subtitle {
+        font-size: 1.15rem;
+        opacity: 0.92;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+    .category-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        border-left: 6px solid var(--primary);
+        margin-bottom: 1.5rem;
+        padding: 1.5rem 2.2rem 1.1rem 2.2rem;
+        transition: box-shadow 0.25s, transform 0.18s;
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .category-card.inactive {
+        border-left-color: var(--gray-dark);
+        opacity: 0.8;
+    }
+    .category-card:hover {
+        transform: translateY(-4px) scale(1.012);
+        box-shadow: var(--shadow-hover);
+    }
+    .category-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid var(--gray-light);
+        background: linear-gradient(90deg, rgba(26,35,126,0.03) 0%, rgba(26,35,126,0.01) 100%);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .category-info {
+        flex: 1;
+    }
+    .category-name {
+        font-size: 1.13rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0 0 0.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .category-name i {
+        font-size: 1.1rem;
+        color: var(--primary);
+        margin-right: 0.4rem;
+    }
+    .category-details {
+        font-size: 0.97rem;
+        color: var(--gray-dark);
+        margin-bottom: 0.2rem;
+    }
+    .category-status {
+        padding: 0.45rem 1.1rem;
+        border-radius: 18px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: 1rem;
+    }
+    .status-active {
+        background: linear-gradient(135deg, var(--success), #66bb6a);
+        color: white;
+    }
+    .status-inactive {
+        background: linear-gradient(135deg, var(--gray-dark), #888);
+        color: white;
+    }
+    .category-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    .btn-action {
+        background: none;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.93rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 1px 4px rgba(26,35,126,0.06);
+    }
+    .btn-action:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-light);
+        margin-bottom: 1rem;
+    }
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.3rem 1.5rem 1.1rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.info { border-left-color: var(--info); }
+    .stat-icon {
+        font-size: 2.2rem;
+        position: absolute;
+        top: 1.1rem;
+        right: 1.2rem;
+        opacity: 0.13;
+        z-index: 1;
+    }
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        z-index: 2;
+        position: relative;
+    }
+    .stat-label {
+        color: var(--gray-dark);
+        font-weight: 500;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 0.2rem;
+        z-index: 2;
+        position: relative;
+    }
+    .quick-form {
+        background: var(--gradient-primary);
+        color: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem 2.5rem 1.5rem 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: var(--shadow-soft);
+        position: relative;
+        overflow: hidden;
+    }
+    .quick-form h5 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        color: #fff;
+        letter-spacing: 0.5px;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .quick-form .form-control {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.9rem 1.1rem;
+        font-size: 1rem;
+        background: rgba(255,255,255,0.95);
+        color: var(--primary-dark);
+        transition: all 0.3s;
+        box-shadow: none;
+    }
+    .quick-form .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.13rem rgba(57,73,171,0.13);
+        background: #fff;
+        color: var(--primary-dark);
+    }
+    .quick-form .form-label {
+        color: #fff;
+        font-weight: 600;
+        font-size: 0.98rem;
+        margin-bottom: 0.3rem;
+        letter-spacing: 0.2px;
+    }
+    .quick-form .btn-light {
+        background: #fff;
+        color: var(--primary-dark);
+        border-radius: var(--border-radius);
+        font-weight: 700;
+        border: none;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        transition: all 0.3s;
+    }
+    .quick-form .btn-light:hover {
+        background: var(--primary-light);
+        color: #fff;
+        box-shadow: var(--shadow-hover);
+    }
+    @media (max-width: 900px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:admin_panel' %}">Panel Admin</a></li>
+        <li class="breadcrumb-item active">Gestionar Categorías</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Header principal -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-tags"></i>
+            Gestionar Categorías
+        </h1>
+        <p class="page-subtitle">Administra y organiza las categorías de productos</p>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="stats-row">
+    <div class="stat-card success">
+        <i class="fas fa-list-alt stat-icon"></i>
+        <div class="stat-value">{{ total_categorias }}</div>
+        <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-card info">
+        <i class="fas fa-check-circle stat-icon"></i>
+        <div class="stat-value">{{ categorias_activas }}</div>
+        <div class="stat-label">Activas</div>
+    </div>
+    <div class="stat-card danger">
+        <i class="fas fa-times-circle stat-icon"></i>
+        <div class="stat-value">{{ categorias_inactivas }}</div>
+        <div class="stat-label">Inactivas</div>
+    </div>
+    <div class="stat-card warning">
+        <i class="fas fa-boxes stat-icon"></i>
+        <div class="stat-value">{{ categorias_con_productos }}</div>
+        <div class="stat-label">Con Productos</div>
+    </div>
+</div>
+
+<!-- Formulario rápido -->
+<div class="quick-form mb-4">
+    <h5><i class="fas fa-plus-circle me-2"></i>Agregar Nueva Categoría</h5>
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="crear">
+        <div class="col-md-4">
+            <input type="text" name="nombre" class="form-control" placeholder="Nombre de la categoría" required>
+        </div>
+        <div class="col-md-6">
+            <input type="text" name="descripcion" class="form-control" placeholder="Descripción (opcional)">
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100 py-3" style="font-size:1rem; font-weight:700; border-radius:var(--border-radius); min-height:40px;">
+                <i class="fas fa-plus me-2"></i>Agregar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de categorías -->
+<div class="row">
+    {% for categoria in categorias %}
+        <div class="col-12">
+            <div class="category-card {% if not categoria.activo %}inactive{% endif %}">
+                <div class="category-header">
+                    <div class="category-info">
+                        <div class="category-name">
+                            <i class="fas fa-tag"></i>
+                            {{ categoria.nombre }}
+                            <span class="category-status {% if categoria.activo %}status-active{% else %}status-inactive{% endif %}">
+                                {% if categoria.activo %}Activa{% else %}Inactiva{% endif %}
+                            </span>
+                        </div>
+                        <div class="category-details">
+                            {% if categoria.descripcion %}
+                                {{ categoria.descripcion }}
+                            {% else %}
+                                <em>Sin descripción</em>
+                            {% endif %}
+                        </div>
+                        <div class="small text-muted">
+                            <i class="fas fa-calendar me-1"></i>Creada: {{ categoria.created_at|date:"d/m/Y" }}
+                            {% if categoria.usuario_creacion %}
+                                por {{ categoria.usuario_creacion.username }}
+                            {% endif %}
+                        </div>
+                        <div class="small text-muted">
+                            <i class="fas fa-boxes me-1"></i>Productos: {{ categoria.productos_count }}
+                        </div>
+                    </div>
+                    <div class="category-actions">
+                        <button type="button" class="btn-action" title="Editar" onclick="editCategory({{ categoria.id }}, '{{ categoria.nombre }}', '{{ categoria.descripcion }}')">
+                            <i class="fas fa-edit"></i> Editar
+                        </button>
+                        <form method="post" style="display:inline;" class="form-toggle-categoria">
+                            {% csrf_token %}
+                            <input type="hidden" name="action" value="toggle_activo">
+                            <input type="hidden" name="categoria_id" value="{{ categoria.id }}">
+                            <button type="submit" class="btn-action" title="{% if categoria.activo %}Desactivar{% else %}Activar{% endif %}">
+                                <i class="fas fa-toggle-{% if categoria.activo %}off{% else %}on{% endif %}"></i> {% if categoria.activo %}Desactivar{% else %}Activar{% endif %}
+                            </button>
+                        </form>
+                        <a href="{% url 'core:inventario_categoria' %}?categoria={{ categoria.id }}" class="btn-action" title="Ver Productos">
+                            <i class="fas fa-eye"></i> Productos
+                        </a>
+                        <form method="post" action="{% url 'core:eliminar_categoria' categoria.id %}" style="display:inline;" class="form-eliminar-categoria">
+                            {% csrf_token %}
+                            <button type="button" class="btn-action btn-delete btn-eliminar-categoria" title="Eliminar" data-nombre="{{ categoria.nombre }}">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-tags mb-3" style="font-size: 4.5rem; color: var(--primary-light);"></i>
+                <h4 class="fw-bold mb-2">No hay categorías registradas</h4>
+                <p class="text-muted mb-4">Aún no has creado ninguna categoría. Comienza ahora para organizar tus productos de manera eficiente.</p>
+                <button class="btn btn-primary btn-lg d-flex align-items-center justify-content-center mx-auto" style="gap:0.5rem; min-width:220px;" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                    <i class="fas fa-plus align-middle" style="font-size:1.2em; margin-bottom:2px;"></i>
+                    <span class="align-middle">Crear Primera Categoría</span>
+                </button>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Modal para agregar categoría -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Nueva Categoría
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modalNombre" class="form-label">Nombre de la Categoría *</label>
+                        <input type="text" name="nombre" id="modalNombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalDescripcion" class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="modalDescripcion" class="form-control" rows="3"
+                                  placeholder="Descripción opcional de la categoría"></textarea>
+                    </div>
+
+                    <!-- Sección de Características Personalizadas -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Características Personalizadas</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarCampoPersonalizado()">
+                                <i class="fas fa-plus me-1"></i>Agregar Campo
+                            </button>
+                        </div>
+                        <div id="camposPersonalizados">
+                            <!-- Los campos se agregan dinámicamente aquí -->
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Define características específicas que tendrán los productos de esta categoría (ej: RAM, Procesador, etc.)
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Guardar Categoría
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar categoría -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Categoría
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="editar">
+                <input type="hidden" name="categoria_id" id="editCategoriaId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label">Nombre de la Categoría *</label>
+                        <input type="text" name="nombre" id="editNombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescripcion" class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="editDescripcion" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <!-- Sección de Características Personalizadas para Edición -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0"><i class="fas fa-cogs me-2"></i>Características Personalizadas</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarCampoPersonalizadoEdit()">
+                                <i class="fas fa-plus me-1"></i>Agregar Campo
+                            </button>
+                        </div>
+                        <div id="camposPersonalizadosEdit">
+                            <!-- Los campos se cargan dinámicamente aquí -->
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Modifica las características específicas de esta categoría
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Actualizar Categoría
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminación -->
+<div class="modal fade" id="modalConfirmarEliminarCategoria" tabindex="-1" aria-labelledby="modalEliminarCategoriaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalEliminarCategoriaLabel">Confirmar eliminación</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Estás seguro de que deseas eliminar la categoría <span id="nombreCategoriaEliminar" class="fw-bold"></span>?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="btnConfirmarEliminarCategoria">Eliminar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let formCategoriaAEliminar = null;
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-eliminar-categoria').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const nombre = this.getAttribute('data-nombre');
+                document.getElementById('nombreCategoriaEliminar').textContent = nombre;
+                formCategoriaAEliminar = this.closest('form');
+                const modal = new bootstrap.Modal(document.getElementById('modalConfirmarEliminarCategoria'));
+                modal.show();
+            });
+        });
+        const btnConfirmar = document.getElementById('btnConfirmarEliminarCategoria');
+        if (btnConfirmar) {
+            btnConfirmar.addEventListener('click', function() {
+                if (formCategoriaAEliminar) {
+                    formCategoriaAEliminar.submit();
+                }
+            });
+        }
+    });
+
+    let contadorCampos = 0;
+    let contadorCamposEdit = 0;
+
+    function agregarCampoPersonalizado() {
+        contadorCampos++;
+        const container = document.getElementById('camposPersonalizados');
+        const campoDiv = document.createElement('div');
+        campoDiv.className = 'border rounded p-3 mb-3';
+        campoDiv.id = `campo_${contadorCampos}`;
+
+        campoDiv.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label small">Nombre del Campo</label>
+                    <input type="text" name="campo_nombre[]" class="form-control form-control-sm"
+                           placeholder="ej: RAM, Procesador" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Tipo de Campo</label>
+                    <select name="campo_tipo[]" class="form-select form-select-sm" onchange="toggleOpciones(this)">
+                        <option value="text">Texto</option>
+                        <option value="number">Número</option>
+                        <option value="select">Lista desplegable</option>
+                        <option value="textarea">Texto largo</option>
+                        <option value="date">Fecha</option>
+                        <option value="radio">Opción múltiple</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Opciones (para listas)</label>
+                    <input type="text" name="campo_opciones[]" class="form-control form-control-sm opciones-input"
+                           placeholder="opción1,opción2,opción3" style="display: none;">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">¿Obligatorio?</label>
+                    <div class="form-check">
+                        <input type="checkbox" name="campo_obligatorio[]" value="${contadorCampos - 1}"
+                               class="form-check-input" id="obligatorio_${contadorCampos}">
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="eliminarCampo('campo_${contadorCampos}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(campoDiv);
+    }
+
+    function agregarCampoPersonalizadoEdit() {
+        contadorCamposEdit++;
+        const container = document.getElementById('camposPersonalizadosEdit');
+        const campoDiv = document.createElement('div');
+        campoDiv.className = 'border rounded p-3 mb-3';
+        campoDiv.id = `campo_edit_${contadorCamposEdit}`;
+
+        campoDiv.innerHTML = `
+            <div class="row g-2">
+                <div class="col-md-4">
+                    <label class="form-label small">Nombre del Campo</label>
+                    <input type="text" name="campo_nombre[]" class="form-control form-control-sm"
+                           placeholder="ej: RAM, Procesador" required>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Tipo de Campo</label>
+                    <select name="campo_tipo[]" class="form-select form-select-sm" onchange="toggleOpciones(this)">
+                        <option value="text">Texto</option>
+                        <option value="number">Número</option>
+                        <option value="select">Lista desplegable</option>
+                        <option value="textarea">Texto largo</option>
+                        <option value="date">Fecha</option>
+                        <option value="radio">Opción múltiple</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">Opciones (para listas)</label>
+                    <input type="text" name="campo_opciones[]" class="form-control form-control-sm opciones-input"
+                           placeholder="opción1,opción2,opción3" style="display: none;">
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">¿Obligatorio?</label>
+                    <div class="form-check">
+                        <input type="checkbox" name="campo_obligatorio[]" value="${contadorCamposEdit - 1}"
+                               class="form-check-input" id="obligatorio_edit_${contadorCamposEdit}">
+                    </div>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label small">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="eliminarCampo('campo_edit_${contadorCamposEdit}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(campoDiv);
+    }
+
+    function toggleOpciones(selectElement) {
+        const opcionesInput = selectElement.closest('.row').querySelector('.opciones-input');
+        if (selectElement.value === 'select' || selectElement.value === 'radio') {
+            opcionesInput.style.display = 'block';
+            opcionesInput.required = true;
+        } else {
+            opcionesInput.style.display = 'none';
+            opcionesInput.required = false;
+            opcionesInput.value = '';
+        }
+    }
+
+    function eliminarCampo(campoId) {
+        const campo = document.getElementById(campoId);
+        if (campo) {
+            campo.remove();
+        }
+    }
+
+    function cargarCamposExistentes(categoriaId) {
+        // Esta función se puede expandir para cargar campos existentes via AJAX
+        // Por ahora, simplemente limpia el contenedor de edición
+        document.getElementById('camposPersonalizadosEdit').innerHTML = '';
+        contadorCamposEdit = 0;
+    }
+
+    function editCategory(id, nombre, descripcion) {
+        document.getElementById('editCategoriaId').value = id;
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('editDescripcion').value = descripcion;
+
+        // Cargar campos existentes
+        cargarCamposExistentes(id);
+
+        var modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+        modal.show();
+    }
+
+    function toggleCategory(id, nombre, isActive) {
+        const action = isActive ? 'desactivar' : 'activar';
+        const confirmMessage = `¿Estás seguro de que quieres ${action} la categoría "${nombre}"?`;
+
+        if (confirm(confirmMessage)) {
+            const form = document.createElement('form');
+            form.method = 'post';
+            form.innerHTML = `
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_activo">
+                <input type="hidden" name="categoria_id" value="${id}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+
+    // Limpiar modales al cerrarlos
+    document.getElementById('addCategoryModal').addEventListener('hidden.bs.modal', function () {
+        this.querySelector('form').reset();
+        document.getElementById('camposPersonalizados').innerHTML = '';
+        contadorCampos = 0;
+    });
+
+    document.getElementById('editCategoryModal').addEventListener('hidden.bs.modal', function () {
+        this.querySelector('form').reset();
+        document.getElementById('camposPersonalizadosEdit').innerHTML = '';
+        contadorCamposEdit = 0;
+    });
+
+    // Agregar un campo por defecto al abrir el modal de nueva categoría
+    document.getElementById('addCategoryModal').addEventListener('shown.bs.modal', function () {
+        if (document.getElementById('camposPersonalizados').children.length === 0) {
+            // Agregar un campo de ejemplo
+            setTimeout(agregarCampoPersonalizado, 100);
+        }
+    });
+</script>
+{% endblock %}

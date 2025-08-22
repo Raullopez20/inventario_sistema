@@ -1,0 +1,1111 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    body {
+        background: var(--gray-bg);
+    }
+    .page-header-producto {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header-producto .container {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .page-title-producto {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title-producto i {
+        font-size: 2.2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .page-subtitle-producto {
+        font-size: 1.15rem;
+        opacity: 0.92;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+        font-weight: 400;
+    }
+    .page-header-producto .tips {
+        margin-top: 1.2rem;
+        background: rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        font-size: 1rem;
+        color: #e3e6ef;
+        font-style: italic;
+        max-width: 600px;
+    }
+    .form-section {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem 2.2rem 1.5rem 2.2rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .form-section h5 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--gray-light);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .form-section .section-desc {
+        color: var(--gray-dark);
+        font-size: 0.98rem;
+        margin-bottom: 1.2rem;
+        opacity: 0.85;
+    }
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.75rem;
+        transition: all 0.3s ease;
+        font-size: 1rem;
+        background: #fff;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(57, 73, 171, 0.15);
+        outline: none;
+        transform: translateY(-1px);
+    }
+    .form-label {
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-size: 0.93rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+    }
+    .required-field::after {
+        content: ' *';
+        color: var(--danger);
+    }
+    .btn-save {
+        background: var(--gradient-primary);
+        border: none;
+        padding: 1rem 2.2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 160, 71, 0.13);
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        color: white;
+    }
+    .btn-cancel {
+        background: none;
+        border: 2px solid var(--gray-light);
+        padding: 1rem 2.2rem;
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        color: var(--gray-dark);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(55, 65, 81, 0.13);
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+    }
+    .btn-cancel:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+    .error-message {
+        color: var(--danger);
+        font-size: 0.97rem;
+        margin-top: 0.5rem;
+        font-weight: 500;
+    }
+    .tipo-producto-info {
+        background: linear-gradient(135deg, var(--info) 0%, #42a5f5 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius-lg);
+        margin-bottom: 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-soft);
+        font-size: 1.08rem;
+    }
+    .campos_personalizados {
+        background: rgba(26, 35, 126, 0.05);
+        border: 2px solid var(--primary-light);
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem;
+        margin-top: 2rem;
+        box-shadow: var(--shadow-soft);
+    }
+    .campo-personalizado {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--primary);
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+    }
+    .image-upload-area {
+        position: relative;
+        cursor: pointer;
+        border: 2px dashed var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 1.2rem 1rem;
+        text-align: center;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        min-height: 160px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    .image-upload-area:hover {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(57, 73, 171, 0.13);
+        background: #e3e6ef;
+    }
+    .upload-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: var(--gray-dark);
+        gap: 0.5rem;
+    }
+    .image-preview {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    #previewImg {
+        max-width: 100%;
+        max-height: 150px;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.13);
+    }
+    .side-summary {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        padding: 1.5rem 1.2rem;
+        margin-bottom: 2rem;
+        border-left: 5px solid var(--info);
+        min-height: 180px;
+    }
+    .side-summary h6 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .side-summary .summary-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        font-size: 1rem;
+    }
+    .side-summary .summary-list li {
+        margin-bottom: 0.7rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .side-summary .summary-list i {
+        color: var(--primary-light);
+        font-size: 1.1rem;
+    }
+    @media (max-width: 900px) {
+        .form-section, .campos-personalizados, .tipo-producto-info, .side-summary {
+            padding: 1rem;
+        }
+        .page-header-producto {
+            padding: 1.2rem 0 1rem 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item active">{{ title }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+<!-- HEADER UNIFICADO -->
+<div class="page-header-producto">
+    <div class="container">
+        <h1 class="page-title-producto">
+            <i class="fas fa-plus-circle"></i>
+            {{ title }}
+        </h1>
+        <p class="page-subtitle-producto">Completa el formulario para agregar un nuevo producto al inventario</p>
+        <div class="tips">
+            <i class="fas fa-lightbulb me-2"></i>
+            Rellena todos los campos obligatorios. La categoría seleccionada puede activar campos personalizados y detección automática del tipo de producto.
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    {% block content %}
+    <form method="post" enctype="multipart/form-data" id="productoForm">
+        {% csrf_token %}
+        {{ form.tipo_producto_detectado }}
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Información básica -->
+                <div class="form-section">
+                    <h5><i class="fas fa-info-circle"></i> Información Básica</h5>
+                    <div class="section-desc">Datos principales del producto. Selecciona la categoría para activar la detección automática y campos personalizados.</div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="id_categoria" class="form-label required-field" data-bs-toggle="tooltip" title="Obligatorio. Selecciona la categoría para activar campos personalizados.">
+                                    <i class="fas fa-tags"></i> Categoría
+                            </label>
+                            {{ form.categoria }}
+                            {% if form.categoria.errors %}
+                                <div class="error-message">{{ form.categoria.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_marca" class="form-label required-field"><i class="fas fa-trademark"></i> Marca</label>
+                            {{ form.marca }}
+                            {% if form.marca.errors %}
+                                <div class="error-message">{{ form.marca.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_modelo" class="form-label required-field"><i class="fas fa-box"></i> Modelo del Producto</label>
+                            {{ form.modelo }}
+                            {% if form.modelo.errors %}
+                                <div class="error-message">{{ form.modelo.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_imagen" class="form-label"><i class="fas fa-image"></i> Imagen del Producto</label>
+                            <div class="image-upload-area" tabindex="0" aria-label="Zona de carga de imagen" data-bs-toggle="tooltip" title="Haz clic para seleccionar una imagen">
+                                <div class="upload-placeholder" id="uploadPlaceholder">
+                                    <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                                    <p class="text-muted mb-2">Selecciona una imagen del producto</p>
+                                    <small class="text-muted">JPG, PNG, GIF - Máx. 5MB</small>
+                                </div>
+                                <div class="image-preview" id="imagePreview" style="display: none;">
+                                    <img id="previewImg" src="" alt="Preview" style="max-width: 100%; max-height: 150px; border-radius: 8px;">
+                                    <small class="text-muted d-block mt-2" id="fileName"></small>
+                                </div>
+                            </div>
+                            {{ form.imagen }}
+                            {% if form.imagen.errors %}
+                                <div class="error-message">{{ form.imagen.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_codigo_barras" class="form-label"><i class="fas fa-barcode"></i> Código de Barras</label>
+                            {{ form.codigo_barras }}
+                            {% if form.codigo_barras.errors %}
+                                <div class="error-message">{{ form.codigo_barras.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="id_condicion" class="form-label required-field"><i class="fas fa-clipboard-check"></i> Condición Física</label>
+                            {{ form.condicion }}
+                            {% if form.condicion.errors %}
+                                <div class="error-message">{{ form.condicion.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label for="id_especificaciones" class="form-label"><i class="fas fa-list-alt"></i> Especificaciones Técnicas</label>
+                    {{ form.especificaciones }}
+                    {% if form.especificaciones.errors %}
+                        <div class="error-message">{{ form.especificaciones.errors.0 }}</div>
+                    {% endif %}
+                    <small class="text-muted">Opcional: Especificaciones en formato JSON</small>
+                </div>
+            </div>
+
+            <!-- Información sobre detección automática -->
+            <div id="tipoProductoInfo" class="tipo-producto-info" style="display: none;">
+                <h5><i class="fas fa-magic me-2"></i>Tipo de Producto Detectado</h5>
+                <p id="tipoNombre" class="mb-0"></p>
+                <small id="tipoDescripcion"></small>
+            </div>
+
+            <!-- Campos Personalizados Dinámicos -->
+            <div id="camposPersonalizados" class="campos-personalizados" style="display: none;">
+                <h5><i class="fas fa-user-cog me-2"></i>Campos Específicos del Producto</h5>
+                <div id="contenedorCampos"></div>
+            </div>
+
+            <!-- Información de compra -->
+            <div class="form-section">
+                <h5><i class="fas fa-shopping-cart"></i> Información de Compra</h5>
+                <div class="section-desc">Datos de adquisición del producto.</div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_fecha_compra" class="form-label required-field"><i class="fas fa-calendar-alt"></i> Fecha de Compra</label>
+                            {{ form.fecha_compra }}
+                            {% if form.fecha_compra.errors %}
+                                <div class="error-message">{{ form.fecha_compra.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_precio_compra" class="form-label required-field"><i class="fas fa-euro-sign"></i> Precio de Compra (€)</label>
+                            {{ form.precio_compra }}
+                            {% if form.precio_compra.errors %}
+                                <div class="error-message">{{ form.precio_compra.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="id_proveedor" class="form-label"><i class="fas fa-truck"></i> Proveedor</label>
+                            {{ form.proveedor }}
+                            {% if form.proveedor.errors %}
+                                <div class="error-message">{{ form.proveedor.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="id_factura_numero" class="form-label"><i class="fas fa-file-invoice"></i> Número de Factura</label>
+                            {{ form.factura_numero }}
+                            {% if form.factura_numero.errors %}
+                                <div class="error-message">{{ form.factura_numero.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Garantía -->
+            <div class="form-section">
+                <h5><i class="fas fa-shield-alt"></i> Garantía</h5>
+                <div class="section-desc">Fecha de finalización de la garantía (se calcula automáticamente a partir de la fecha de compra).</div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="mb-3">
+                            <label for="id_fecha_fin_garantia" class="form-label"><i class="fas fa-calendar-check"></i> Fecha Fin de Garantía</label>
+                            {{ form.fecha_fin_garantia }}
+                            {% if form.fecha_fin_garantia.errors %}
+                                <div class="error-message">{{ form.fecha_fin_garantia.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <!-- Resumen visual del producto -->
+            <div class="side-summary" id="sideSummary">
+                <h6><i class="fas fa-eye"></i> Resumen del Producto</h6>
+                <ul class="summary-list">
+                    <li><i class="fas fa-tags"></i> <span id="summaryCategoria">-</span></li>
+                    <li><i class="fas fa-trademark"></i> <span id="summaryMarca">-</span></li>
+                    <li><i class="fas fa-box"></i> <span id="summaryModelo">-</span></li>
+                    <li><i class="fas fa-barcode"></i> <span id="summaryCodigoBarras">-</span></li>
+                    <li><i class="fas fa-calendar-alt"></i> <span id="summaryFechaCompra">-</span></li>
+                    <li><i class="fas fa-euro-sign"></i> <span id="summaryPrecioCompra">-</span></li>
+                </ul>
+            </div>
+            <!-- Estado y ubicación -->
+            <div class="form-section">
+                <h5><i class="fas fa-cogs"></i> Estado y Ubicación</h5>
+                <div class="section-desc">Información de estado y localización actual.</div>
+                <div class="mb-3">
+                    <label for="id_estado" class="form-label required-field"><i class="fas fa-flag"></i> Estado</label>
+                    {{ form.estado }}
+                    {% if form.estado.errors %}
+                        <div class="error-message">{{ form.estado.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="mb-3">
+                    <label for="id_ubicacion_actual" class="form-label"><i class="fas fa-map-marker-alt"></i> Ubicación Actual</label>
+                    {{ form.ubicacion_actual }}
+                    {% if form.ubicacion_actual.errors %}
+                        <div class="error-message">{{ form.ubicacion_actual.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <!-- Observaciones -->
+            <div class="form-section">
+                <h5><i class="fas fa-comment"></i> Observaciones</h5>
+                <div class="section-desc">Notas adicionales sobre el producto.</div>
+                <label for="id_observaciones" class="form-label"><i class="fas fa-sticky-note"></i> Observaciones adicionales</label>
+                {{ form.observaciones }}
+                {% if form.observaciones.errors %}
+                    <div class="error-message">{{ form.observaciones.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <!-- Información sobre pegatinas -->
+            <div class="form-section">
+                <h5><i class="fas fa-tags"></i> Pegatinas Identificativas</h5>
+                <div class="section-desc">Después de crear el producto podrás:</div>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success me-2"></i>Generar códigos QR</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Crear códigos de barras</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Imprimir etiquetas</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Gestionar datos específicos</li>
+                </ul>
+            </div>
+            <!-- Botones de acción -->
+            <div class="d-flex justify-content-end gap-3 mt-4">
+                <a href="{% url 'productos:lista_productos' %}" class="btn btn-cancel">
+                    <i class="fas fa-times me-2"></i>Cancelar
+                </a>
+                <button type="submit" class="btn btn-save">
+                    <i class="fas fa-save me-2"></i>Guardar Producto
+                </button>
+            </div>
+        </div>
+    </div>
+    </form>
+    {% endblock %}
+</div>
+
+{% block extra_js %}
+<script>
+let tipoProductoActual = null;
+
+// Detectar tipo de producto cuando cambia la categoría
+document.getElementById('id_categoria').addEventListener('change', function(e) {
+    const categoriaId = e.target.value;
+
+    if (categoriaId) {
+        cargarCamposCategoria(categoriaId);
+    } else {
+        ocultarCamposPersonalizados();
+    }
+});
+
+function cargarCamposCategoria(categoriaId) {
+    // Usar la nueva vista AJAX para obtener campos de categoría
+    fetch(`{% url "productos:obtener_campos_categoria" %}?categoria_id=${categoriaId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.campos && Object.keys(data.campos).length > 0) {
+            mostrarTipoProducto({
+                nombre: data.categoria_nombre || 'Categoría seleccionada',
+                descripcion: 'Campos personalizados definidos para esta categoría'
+            });
+            generarCamposPersonalizadosCategoria(data.campos);
+        } else {
+            // Intentar detección automática como respaldo
+            detectarTipoProducto(categoriaId);
+        }
+    })
+    .catch(error => {
+        console.error('Error al cargar campos de categoría:', error);
+        // Intentar detección automática como respaldo
+        detectarTipoProducto(categoriaId);
+    });
+}
+
+function detectarTipoProducto(categoriaId) {
+    // Crear FormData en lugar de JSON
+    const formData = new FormData();
+    formData.append('categoria', categoriaId);
+
+    fetch('{% url "productos:detectar_tipo_producto" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // El backend devuelve tipo_detectado como string, no tipo_producto como objeto
+            // Crear un objeto temporal con la información disponible
+            const tipoProductoObj = {
+                nombre: data.tipo_detectado ? data.tipo_detectado.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()) : 'Tipo genérico',
+                codigo_prefijo: data.tipo_detectado ? data.tipo_detectado.substring(0, 3).toUpperCase() : 'GEN',
+                campos_personalizados: data.campos_personalizados || []
+            };
+
+            tipoProductoActual = tipoProductoObj;
+            mostrarTipoProducto(tipoProductoObj);
+            mostrarNumeroSerieAutomatico(tipoProductoObj);
+            generarCamposPersonalizados(data.campos_personalizados || []);
+
+            // Guardar en campo oculto
+            const tipoProductoField = document.getElementById('id_tipo_producto_detectado');
+            if (tipoProductoField) {
+                tipoProductoField.value = data.tipo_detectado;
+            }
+        } else {
+            ocultarCamposPersonalizados();
+            console.log('No se detectó tipo específico:', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        ocultarCamposPersonalizados();
+    });
+}
+
+function mostrarTipoProducto(tipo) {
+    const infoDiv = document.getElementById('tipoProductoInfo');
+    const nombreSpan = document.getElementById('tipoNombre');
+    const descripcionSpan = document.getElementById('tipoDescripcion');
+
+    // Validar que el objeto tipo existe y tiene las propiedades necesarias
+    if (!tipo) {
+        console.warn('Tipo de producto no definido');
+        if (infoDiv) infoDiv.style.display = 'none';
+        return;
+    }
+
+    // Si tipo es solo una cadena, crear un objeto con la información básica
+    if (typeof tipo === 'string') {
+        tipo = {
+            nombre: tipo.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase()),
+            codigo_prefijo: tipo.substring(0, 3).toUpperCase()
+        };
+    }
+
+    // Verificar que las propiedades existen
+    const nombre = tipo.nombre || 'Tipo no especificado';
+    const codigoPrefijo = tipo.codigo_prefijo || 'N/A';
+
+    if (nombreSpan) {
+        nombreSpan.textContent = `${nombre} (${codigoPrefijo})`;
+    }
+
+    if (descripcionSpan) {
+        descripcionSpan.textContent = 'Campos personalizados disponibles para este tipo de producto';
+    }
+
+    if (infoDiv) {
+        infoDiv.style.display = 'block';
+        infoDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+}
+
+function mostrarNumeroSerieAutomatico(tipo) {
+    const autoDiv = document.getElementById('numeroSerieAuto');
+    const ejemploSpan = document.getElementById('numeroSerieEjemplo');
+
+    // Validar que el objeto tipo existe
+    if (!tipo) {
+        if (autoDiv) autoDiv.style.display = 'none';
+        return;
+    }
+
+    // Si tipo es solo una cadena, no hay ejemplo de número de serie
+    if (typeof tipo === 'string') {
+        if (autoDiv) autoDiv.style.display = 'none';
+        return;
+    }
+
+    if (ejemploSpan && tipo.numero_serie_ejemplo) {
+        ejemploSpan.textContent = tipo.numero_serie_ejemplo;
+    }
+
+    if (autoDiv) {
+        autoDiv.style.display = 'block';
+    }
+
+    // Placeholder en el campo
+    const numeroSerieInput = document.getElementById('id_numero_serie');
+    if (numeroSerieInput && tipo.numero_serie_ejemplo) {
+        numeroSerieInput.placeholder = `Ej: ${tipo.numero_serie_ejemplo} (se generará automáticamente)`;
+    }
+}
+
+function generarCamposPersonalizados(campos) {
+    const contenedor = document.getElementById('contenedorCampos');
+    const seccion = document.getElementById('camposPersonalizados');
+
+    // Limpiar contenedor
+    contenedor.innerHTML = '';
+
+    // Verificar si campos es un array y tiene elementos
+    if (!campos || (Array.isArray(campos) && campos.length === 0) || (typeof campos === 'object' && Object.keys(campos).length === 0)) {
+        seccion.style.display = 'none';
+        return;
+    }
+
+    // Mostrar sección
+    seccion.style.display = 'block';
+
+    // Si campos es un array, procesarlo como tal
+    if (Array.isArray(campos)) {
+        campos.forEach(campo => {
+            const campoDiv = document.createElement('div');
+            campoDiv.className = 'campo-personalizado';
+
+            const label = document.createElement('label');
+            label.className = 'form-label';
+            if (campo.requerido) {
+                label.className += ' required-field';
+            }
+            label.textContent = campo.nombre || 'Campo personalizado';
+
+            let input;
+            const fieldName = `campo_personalizado_${campo.nombre}`;
+
+            if (campo.tipo === 'TEXTO_LARGO') {
+                input = document.createElement('textarea');
+                input.className = 'form-control';
+                input.rows = 3;
+            } else if (campo.tipo === 'NUMERO') {
+                input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'form-control';
+            } else {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-control';
+
+                // Patrones específicos
+                if (campo.nombre.toLowerCase().includes('imei')) {
+                    input.pattern = '[0-9]{15}';
+                    input.maxLength = 15;
+                    input.placeholder = 'Ej: 123456789012345 (15 dígitos)';
+                } else if (campo.nombre.toLowerCase().includes('mac')) {
+                    input.pattern = '[0-9A-Fa-f:]{17}';
+                    input.placeholder = 'Ej: 00:1B:44:11:3A:B7';
+                }
+            }
+
+            input.name = fieldName;
+            input.id = fieldName;
+            input.required = campo.requerido || false;
+
+            campoDiv.appendChild(label);
+            campoDiv.appendChild(input);
+
+            contenedor.appendChild(campoDiv);
+        });
+    } else {
+        // Si campos es un objeto, procesarlo como antes
+        for (const [nombre, config] of Object.entries(campos)) {
+            const campoDiv = document.createElement('div');
+            campoDiv.className = 'campo-personalizado';
+
+            const label = document.createElement('label');
+            label.className = 'form-label';
+            if (config.required) {
+                label.className += ' required-field';
+            }
+            label.textContent = config.label || nombre;
+
+            let input;
+            const fieldName = `campo_personalizado_${nombre}`;
+
+            if (config.type === 'textarea') {
+                input = document.createElement('textarea');
+                input.className = 'form-control';
+                input.rows = 3;
+            } else if (config.type === 'select') {
+                input = document.createElement('select');
+                input.className = 'form-select';
+
+                // Opción vacía
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '-- Seleccionar --';
+                input.appendChild(emptyOption);
+
+                // Opciones
+                if (config.choices) {
+                    config.choices.forEach(choice => {
+                        const option = document.createElement('option');
+                        option.value = choice;
+                        option.textContent = choice;
+                        input.appendChild(option);
+                    });
+                }
+            } else {
+                input = document.createElement('input');
+                input.type = config.type === 'number' ? 'number' :
+                           config.type === 'email' ? 'email' : 'text';
+                input.className = 'form-control';
+
+                // Patrones específicos
+                if (nombre.toLowerCase().includes('imei')) {
+                    input.pattern = '[0-9]{15}';
+                    input.maxLength = 15;
+                    input.placeholder = 'Ej: 123456789012345 (15 dígitos)';
+                } else if (nombre.toLowerCase().includes('mac')) {
+                    input.pattern = '[0-9A-Fa-f:]{17}';
+                    input.placeholder = 'Ej: 00:1B:44:11:3A:B7';
+                }
+            }
+
+            input.name = fieldName;
+            input.id = fieldName;
+            input.required = config.required || false;
+
+            if (config.placeholder && !input.placeholder) {
+                input.placeholder = config.placeholder;
+            }
+
+            campoDiv.appendChild(label);
+            campoDiv.appendChild(input);
+
+            // Ayuda
+            if (config.help_text) {
+                const help = document.createElement('small');
+                help.className = 'text-muted';
+                help.textContent = config.help_text;
+                campoDiv.appendChild(help);
+            }
+
+            contenedor.appendChild(campoDiv);
+        }
+    }
+
+    // Scroll suave hacia los campos
+    setTimeout(() => {
+        seccion.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+}
+
+function generarCamposPersonalizadosCategoria(campos) {
+    const contenedor = document.getElementById('contenedorCampos');
+    const seccion = document.getElementById('camposPersonalizados');
+
+    // Limpiar contenedor
+    contenedor.innerHTML = '';
+
+    // Verificar si hay campos definidos
+    if (!campos || Object.keys(campos).length === 0) {
+        seccion.style.display = 'none';
+        return;
+    }
+
+    // Mostrar sección
+    seccion.style.display = 'block';
+
+    // Generar campos dinámicamente
+    for (const [nombreCampo, config] of Object.entries(campos)) {
+        const campoDiv = document.createElement('div');
+        campoDiv.className = 'campo-personalizado';
+
+        const label = document.createElement('label');
+        label.className = 'form-label';
+        if (config.obligatorio) {
+            label.className += ' required-field';
+        }
+        label.textContent = config.label || nombreCampo;
+
+        let input;
+        const fieldName = `campo_categoria_${nombreCampo}`;
+
+        // Crear input según el tipo
+        switch (config.tipo) {
+            case 'textarea':
+                input = document.createElement('textarea');
+                input.className = 'form-control';
+                input.rows = 3;
+                break;
+
+            case 'select':
+                input = document.createElement('select');
+                input.className = 'form-select';
+
+                // Opción vacía
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '-- Seleccionar --';
+                input.appendChild(emptyOption);
+
+                // Agregar opciones
+                if (config.opciones && Array.isArray(config.opciones)) {
+                    config.opciones.forEach(opcion => {
+                        const option = document.createElement('option');
+                        option.value = opcion;
+                        option.textContent = opcion;
+                        input.appendChild(option);
+                    });
+                }
+                break;
+
+            case 'radio':
+                const radioContainer = document.createElement('div');
+                radioContainer.className = 'radio-group';
+
+                if (config.opciones && Array.isArray(config.opciones)) {
+                    config.opciones.forEach((opcion, index) => {
+                        const radioDiv = document.createElement('div');
+                        radioDiv.className = 'form-check form-check-inline';
+
+                        const radioInput = document.createElement('input');
+                        radioInput.type = 'radio';
+                        radioInput.className = 'form-check-input';
+                        radioInput.name = fieldName;
+                        radioInput.value = opcion;
+                        radioInput.id = `${fieldName}_${index}`;
+                        radioInput.required = config.obligatorio;
+
+                        const radioLabel = document.createElement('label');
+                        radioLabel.className = 'form-check-label';
+                        radioLabel.setAttribute('for', `${fieldName}_${index}`);
+                        radioLabel.textContent = opcion;
+
+                        radioDiv.appendChild(radioInput);
+                        radioDiv.appendChild(radioLabel);
+                        radioContainer.appendChild(radioDiv);
+                    });
+                }
+                input = radioContainer;
+                break;
+
+            case 'number':
+                input = document.createElement('input');
+                input.type = 'number';
+                input.className = 'form-control';
+                break;
+
+            case 'date':
+                input = document.createElement('input');
+                input.type = 'date';
+                input.className = 'form-control';
+                break;
+
+            default: // 'text'
+                input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'form-control';
+                break;
+        }
+
+        // Configurar propiedades comunes (excepto para radio)
+        if (config.tipo !== 'radio') {
+            input.name = fieldName;
+            input.id = fieldName;
+            input.required = config.obligatorio || false;
+        }
+
+        // Agregar elementos al contenedor
+        campoDiv.appendChild(label);
+        campoDiv.appendChild(input);
+
+        // Agregar ayuda si existe
+        if (config.ayuda) {
+            const help = document.createElement('small');
+            help.className = 'text-muted mt-1 d-block';
+            help.textContent = config.ayuda;
+            campoDiv.appendChild(help);
+        }
+
+        contenedor.appendChild(campoDiv);
+    }
+
+    // Scroll suave hacia los campos
+    setTimeout(() => {
+        seccion.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 300);
+}
+
+function ocultarCamposPersonalizados() {
+    // Verificar si los elementos existen antes de acceder a ellos
+    const tipoProductoInfo = document.getElementById('tipoProductoInfo');
+    if (tipoProductoInfo) {
+        tipoProductoInfo.style.display = 'none';
+    }
+
+    const numeroSerieAuto = document.getElementById('numeroSerieAuto');
+    if (numeroSerieAuto) {
+        numeroSerieAuto.style.display = 'none';
+    }
+
+    const camposPersonalizados = document.getElementById('camposPersonalizados');
+    if (camposPersonalizados) {
+        camposPersonalizados.style.display = 'none';
+    }
+
+    const tipoProductoDetectado = document.getElementById('id_tipo_producto_detectado');
+    if (tipoProductoDetectado) {
+        tipoProductoDetectado.value = '';
+    }
+
+    // Limpiar placeholder
+    const numeroSerieInput = document.getElementById('id_numero_serie');
+    if (numeroSerieInput) {
+        numeroSerieInput.placeholder = 'Número de serie del producto';
+    }
+
+    tipoProductoActual = null;
+}
+
+// Auto-calcular fecha fin de garantía
+document.getElementById('id_fecha_compra').addEventListener('change', function(e) {
+    const fechaCompra = new Date(e.target.value);
+    const fechaFinGarantia = document.getElementById('id_fecha_fin_garantia');
+
+    if (fechaCompra && !fechaFinGarantia.value) {
+        fechaCompra.setFullYear(fechaCompra.getFullYear() + 2);
+        fechaFinGarantia.value = fechaCompra.toISOString().split('T')[0];
+    }
+});
+
+// Validaciones en tiempo real
+document.addEventListener('input', function(e) {
+    if (e.target.name && e.target.name.includes('imei')) {
+        // Solo números para IMEI
+        e.target.value = e.target.value.replace(/\D/g, '').substring(0, 15);
+    } else if (e.target.name && e.target.name.includes('mac')) {
+        // Formato MAC
+        let value = e.target.value.replace(/[^0-9A-Fa-f]/g, '');
+        if (value.length > 12) value = value.substring(0, 12);
+        const formatted = value.match(/.{1,2}/g)?.join(':') || value;
+        if (formatted !== e.target.value) {
+            e.target.value = formatted.toUpperCase();
+        }
+    }
+});
+
+// Mostrar información sobre campos al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    // Si hay una categoría preseleccionada, detectar tipo
+    const categoriaSelect = document.getElementById('id_categoria');
+    if (categoriaSelect.value) {
+        detectarTipoProducto(categoriaSelect.value);
+    }
+});
+
+// Vista previa de imagen
+document.getElementById('uploadPlaceholder').addEventListener('click', function() {
+    document.getElementById('id_imagen').click();
+});
+
+document.getElementById('id_imagen').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    const fileNameSpan = document.getElementById('fileName');
+    const previewImg = document.getElementById('previewImg');
+    const imagePreviewDiv = document.getElementById('imagePreview');
+
+    if (file) {
+        // Mostrar nombre de archivo
+        fileNameSpan.textContent = file.name;
+
+        // Mostrar vista previa
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImg.src = e.target.result;
+            imagePreviewDiv.style.display = 'flex';
+        }
+        reader.readAsDataURL(file);
+
+        // Ocultar placeholder
+        document.getElementById('uploadPlaceholder').style.display = 'none';
+    } else {
+        imagePreviewDiv.style.display = 'none';
+        document.getElementById('uploadPlaceholder').style.display = 'flex';
+    }
+});
+
+// Resumen visual dinámico
+function updateSummary() {
+    document.getElementById('summaryCategoria').textContent = document.getElementById('id_categoria').selectedOptions[0]?.text || '-';
+    document.getElementById('summaryMarca').textContent = document.getElementById('id_marca').selectedOptions[0]?.text || '-';
+    document.getElementById('summaryModelo').textContent = document.getElementById('id_modelo').value || '-';
+    document.getElementById('summaryCodigoBarras').textContent = document.getElementById('id_codigo_barras').value || '-';
+    document.getElementById('summaryFechaCompra').textContent = document.getElementById('id_fecha_compra').value || '-';
+    document.getElementById('summaryPrecioCompra').textContent = document.getElementById('id_precio_compra').value || '-';
+}
+['id_categoria','id_marca','id_modelo','id_codigo_barras','id_fecha_compra','id_precio_compra'].forEach(id => {
+    document.getElementById(id).addEventListener('input', updateSummary);
+});
+document.addEventListener('DOMContentLoaded', updateSummary);
+</script>
+{% endblock %}

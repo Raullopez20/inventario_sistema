@@ -1,0 +1,8 @@
+Hola {{ empleado.nombre }},
+
+Este es un recordatorio de que tienes asignado el producto "{{ asignacion.producto.nombre }}" ({{ asignacion.producto.numero_serie }}) desde el {{ asignacion.fecha_entrega|date:"d/m/Y" }}.
+
+Por favor, revisa el estado del producto y comunícate con el área de inventario si tienes alguna duda.
+
+Gracias,
+Equipo de Inventario

@@ -1,0 +1,461 @@
+{% extends 'base.html' %}
+
+{% block title %}Inventario por Categoría - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        transform: translate(-40px, 40px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .filter-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(26,35,126,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    .filter-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin: 0 0 1.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: #fff;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.13rem rgba(26,35,126,0.13);
+        outline: none;
+        transform: translateY(-1px);
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    }
+    .btn-outline-secondary {
+        border: 2px solid var(--gray-light);
+        color: var(--gray-dark);
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-outline-secondary:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+    .table {
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+        background: #fff;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-bottom: 0;
+    }
+    .table thead {
+        background: #f8fafc;
+        color: var(--primary-dark);
+        font-size: 1.08rem;
+        font-weight: 700;
+        border-bottom: 2px solid var(--primary-light);
+        letter-spacing: 0.5px;
+    }
+    .table thead th {
+        padding: 1.1rem 1.2rem;
+        border: none;
+        background: none;
+        text-align: left;
+        vertical-align: middle;
+        background: #f8fafc;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) {
+        background-color: #f6f8fb;
+    }
+    }
+    .badge.bg-success, .badge.bg-warning, .badge.bg-danger, .badge.bg-primary, .badge.bg-info, .badge.bg-secondary {
+        font-size: 0.93rem;
+        font-weight: 600;
+        border-radius: 8px;
+        padding: 0.5em 1em;
+        letter-spacing: 0.2px;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        text-transform: uppercase;
+    }
+    .badge.bg-success { background: linear-gradient(135deg, var(--success), #66bb6a) !important; color: white !important; }
+    .badge.bg-warning { background: linear-gradient(135deg, var(--warning), #ffca28) !important; color: var(--gray-dark) !important; }
+    .badge.bg-danger { background: linear-gradient(135deg, var(--danger), #ef5350) !important; color: white !important; }
+    .badge.bg-primary { background: var(--gradient-primary) !important; color: white !important; }
+    .badge.bg-info { background: linear-gradient(135deg, var(--info), #42a5f5) !important; color: white !important; }
+    .badge.bg-secondary { background: var(--gray-light) !important; color: var(--gray-dark) !important; }
+    .table td, .table th {
+        vertical-align: middle;
+    }
+    .btn-group .btn {
+        border-radius: var(--border-radius);
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+    .btn-outline-primary:hover {
+        background: var(--primary);
+        color: white;
+    }
+    .btn-outline-info:hover {
+        background: var(--info);
+        color: white;
+    }
+    .btn-outline-success:hover {
+        background: var(--success);
+        color: white;
+    }
+    .btn-outline-secondary:focus, .btn-outline-primary:focus, .btn-outline-info:focus, .btn-outline-success:focus {
+        box-shadow: 0 0 0 0.13rem rgba(26,35,126,0.13);
+    }
+    .summary-row {
+        background: var(--gray-bg);
+        border-radius: var(--border-radius);
+        padding: 1rem 1.5rem;
+        margin-top: 1.5rem;
+        box-shadow: var(--shadow-soft);
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--gray-light);
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 0.8rem;
+    }
+    .empty-description {
+        color: var(--gray-dark);
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-bottom: 0;
+    }
+    @media (max-width: 900px) {
+        .filter-panel, .table {
+            border-radius: var(--border-radius);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Inventario por Categoría</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Cabecera visual -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-tags"></i>
+            Inventario por Categoría
+            {% if categoria_seleccionada %}
+                - {{ categoria_seleccionada.nombre }}
+            {% endif %}
+        </h1>
+        <p class="page-subtitle">Visualiza y gestiona los productos agrupados por categoría</p>
+    </div>
+</div>
+
+<!-- Panel de filtros -->
+<div class="filter-panel">
+    <div class="filter-title">
+        <i class="fas fa-filter"></i>
+        Filtros de Búsqueda
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <label for="categoriaSelect" class="form-label"><i class="fas fa-tags"></i> Categoría</label>
+            <select class="form-select" id="categoriaSelect" onchange="filtrarCategoria()">
+                <option value="">Todas las categorías</option>
+                {% for categoria in categorias %}
+                    <option value="{{ categoria.id }}"
+                        {% if categoria_seleccionada and categoria.id == categoria_seleccionada.id %}selected{% endif %}>
+                        {{ categoria.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="estadoSelect" class="form-label"><i class="fas fa-clipboard-check"></i> Estado</label>
+            <select class="form-select" id="estadoSelect" onchange="filtrarEstado()">
+                <option value="">Todos los estados</option>
+                {% for estado_key, estado_label in estados %}
+                    <option value="{{ estado_key }}"
+                        {% if estado_filtro == estado_key %}selected{% endif %}>
+                        {{ estado_label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="button" class="btn btn-outline-secondary w-100" onclick="limpiarFiltros()">
+                <i class="fas fa-times"></i> Limpiar Filtros
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de productos -->
+{% if productos %}
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>ID Interno</th>
+                    <th>Categoría</th>
+                    <th>Marca/Modelo</th>
+                    <th>Número de Serie</th>
+                    <th>Estado</th>
+                    <th>Condición</th>
+                    <th>Garantía</th>
+                    <th>Ubicación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                <tr>
+                    <td>
+                        <strong>{{ producto.id_interno }}</strong>
+                        {% if producto.codigo_qr %}
+                            <br><small><i class="bi bi-qr-code"></i> QR</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ producto.categoria.nombre }}</td>
+                    <td>
+                        <strong>{{ producto.marca.nombre }}</strong><br>
+                        <small class="text-muted">{{ producto.modelo }}</small>
+                    </td>
+                    <td>
+                        <code>{{ producto.numero_serie }}</code>
+                    </td>
+                    <td>
+                        {% if producto.estado == 'DISPONIBLE' %}
+                            <span class="badge bg-success">{{ producto.get_estado_display }}</span>
+                        {% elif producto.estado == 'ENTREGADO' %}
+                            <span class="badge bg-warning">{{ producto.get_estado_display }}</span>
+                        {% elif producto.estado == 'AVERIADO' %}
+                            <span class="badge bg-danger">{{ producto.get_estado_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ producto.get_estado_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.condicion == 'NUEVO' %}
+                            <span class="badge bg-primary">{{ producto.get_condicion_display }}</span>
+                        {% elif producto.condicion == 'USADO_BUENO' %}
+                            <span class="badge bg-info">{{ producto.get_condicion_display }}</span>
+                        {% elif producto.condicion == 'AVERIADO' %}
+                            <span class="badge bg-danger">{{ producto.get_condicion_display }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ producto.get_condicion_display }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.en_garantia %}
+                            <span class="text-success">
+                                <i class="bi bi-check-circle"></i>
+                                {{ producto.dias_restantes_garantia }} días
+                            </span>
+                        {% else %}
+                            <span class="text-danger">
+                                <i class="bi bi-x-circle"></i> Sin garantía
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if producto.ubicacion_actual %}
+                            <small>{{ producto.ubicacion_actual.nombre }}</small>
+                        {% else %}
+                            <span class="text-muted">Sin ubicar</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'productos:editar_producto' producto.id %}"
+                               class="btn btn-outline-primary" title="Editar">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <a href="{% url 'productos:detalle_producto' producto.id %}"
+                               class="btn btn-outline-info" title="Ver Detalles">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            {% if producto.estado == 'DISPONIBLE' %}
+                                <a href="{% url 'asignaciones:agregar_asignacion' %}?producto={{ producto.id }}"
+                                   class="btn btn-outline-success" title="Asignar">
+                                    <i class="bi bi-arrow-right"></i>
+                                </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="summary-row">
+        Total de productos mostrados: <strong>{{ productos.count }}</strong>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+        <div class="empty-title">No se encontraron productos</div>
+        <div class="empty-description">No hay productos que coincidan con los filtros seleccionados.</div>
+        <a href="{% url 'productos:agregar_producto' %}" class="btn btn-primary mt-3 shadow-lg px-4 py-3 fs-5 d-inline-flex align-items-center gap-2 animate__animated animate__pulse animate__infinite" style="font-weight:700; border-radius: 14px; letter-spacing: 0.5px; box-shadow: 0 8px 32px rgba(26,35,126,0.13); background: linear-gradient(135deg, var(--success), #66bb6a); border: none;">
+            <i class="fas fa-plus-circle fa-lg"></i> Agregar Primer Producto
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+<script>
+function filtrarCategoria() {
+    const categoriaId = document.getElementById('categoriaSelect').value;
+    const estadoActual = document.getElementById('estadoSelect').value;
+    let url = '{% url "core:inventario_categoria" %}';
+    if (categoriaId) {
+        url = `/inventario/categoria/${categoriaId}/`;
+    }
+    if (estadoActual) {
+        url += `?estado=${estadoActual}`;
+    }
+    window.location.href = url;
+}
+function filtrarEstado() {
+    const estadoSeleccionado = document.getElementById('estadoSelect').value;
+    const urlActual = new URL(window.location);
+    if (estadoSeleccionado) {
+        urlActual.searchParams.set('estado', estadoSeleccionado);
+    } else {
+        urlActual.searchParams.delete('estado');
+    }
+    window.location.href = urlActual.toString();
+}
+function limpiarFiltros() {
+    window.location.href = '{% url "core:inventario_categoria" %}';
+}
+</script>

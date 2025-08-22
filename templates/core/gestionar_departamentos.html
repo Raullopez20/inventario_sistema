@@ -1,0 +1,825 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestionar Departamentos - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        transform: translate(-40px, 40px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .page-subtitle {
+        font-size: 1.15rem;
+        opacity: 0.92;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.3rem 1.5rem 1.1rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.info { border-left-color: var(--info); }
+    .stat-icon {
+        font-size: 2.2rem;
+        position: absolute;
+        top: 1.1rem;
+        right: 1.2rem;
+        opacity: 0.13;
+        z-index: 1;
+    }
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        z-index: 2;
+        position: relative;
+    }
+    .stat-label {
+        color: var(--gray-dark);
+        font-weight: 500;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 0.2rem;
+        z-index: 2;
+        position: relative;
+    }
+    .departments-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+        gap: 1.1rem 1.3rem;
+        margin-top: 1.2rem;
+    }
+    .department-card {
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(26,35,126,0.07);
+        border: 1.5px solid var(--gray-light);
+        transition: box-shadow 0.22s, transform 0.18s, border 0.18s;
+        overflow: hidden;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+        border-left: 5px solid var(--info);
+        padding: 0.8rem 1.1rem 0.8rem 1.1rem;
+        gap: 0.4rem;
+        position: relative;
+    }
+    .department-card.inactive {
+        opacity: 0.7;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left-color: var(--gray-dark);
+        border-color: var(--gray-light);
+    }
+    .department-card:hover {
+        box-shadow: 0 6px 24px rgba(26,35,126,0.13);
+        border-color: var(--info);
+        transform: translateY(-2px) scale(1.012);
+    }
+    .department-header {
+        padding: 0 0 0.4rem 0;
+        border-bottom: 1px solid var(--gray-light);
+        background: none;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .department-title {
+        font-size: 1.08rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        flex: 1;
+        word-break: break-word;
+    }
+    .department-icon {
+        font-size: 1.5rem;
+        color: var(--primary);
+        margin-right: 0.5rem;
+        background: rgba(26,35,126,0.09);
+        padding: 0.5rem 0.7rem;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .department-description {
+        font-size: 0.95rem;
+        color: var(--gray-dark);
+        margin: 0.2rem 0 0.4rem 0;
+        padding: 0.5rem 0.7rem;
+        background: var(--gray-light);
+        border-radius: 8px;
+        min-height: 1.5rem;
+        line-height: 1.4;
+        word-break: break-word;
+    }
+    .department-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        margin-bottom: 0.2rem;
+    }
+    .department-meta {
+        background: rgba(26,35,126,0.05);
+        border-radius: 7px;
+        padding: 0.4rem 0.7rem;
+        margin: 0.2rem 0 0.2rem 0;
+        border-left: 2px solid var(--primary);
+        font-size: 0.83rem;
+        color: var(--gray-dark);
+    }
+    .department-actions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.2rem;
+        padding-top: 0.3rem;
+        border-top: 1px solid var(--gray-light);
+    }
+    .btn-department-action {
+        min-width: 70px;
+        margin-bottom: 0.15rem;
+        font-size: 0.87rem;
+        padding: 0.35rem 0.6rem;
+        border-radius: 7px;
+        border-width: 2px;
+        font-weight: 600;
+        box-shadow: 0 1px 4px rgba(26,35,126,0.06);
+        transition: background 0.2s, color 0.2s, border 0.2s, box-shadow 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        background: linear-gradient(90deg, #f8fafd 0%, #e3e6ef 100%);
+    }
+    .btn-department-action.btn-info {
+        border-color: var(--info);
+        color: var(--info);
+    }
+    .btn-department-action.btn-info:hover {
+        background: var(--info);
+        color: #fff;
+    }
+    .btn-department-action.btn-outline-primary {
+        border-color: var(--primary);
+        color: var(--primary);
+    }
+    .btn-department-action.btn-outline-primary:hover {
+        background: var(--primary);
+        color: #fff;
+    }
+    .btn-department-action.btn-warning {
+        border-color: var(--warning);
+        color: var(--warning);
+    }
+    .btn-department-action.btn-warning:hover {
+        background: var(--warning);
+        color: var(--gray-dark);
+    }
+    .btn-department-action.btn-success {
+        border-color: var(--success);
+        color: var(--success);
+    }
+    .btn-department-action.btn-success:hover {
+        background: var(--success);
+        color: #fff;
+    }
+    .btn-department-action.btn-outline-danger {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+    .btn-department-action.btn-outline-danger:hover {
+        background: var(--danger);
+        color: #fff;
+    }
+    .btn-department-action i {
+        font-size: 1rem;
+    }
+    .table-departments .btn-department-action {
+        min-width: 36px;
+        padding: 0.3rem 0.5rem;
+        font-size: 0.93rem;
+        margin-bottom: 0;
+        margin-right: 0.2rem;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--gray-light);
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 0.8rem;
+    }
+    .empty-description {
+        color: var(--gray-dark);
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-bottom: 0;
+    }
+    /* MODAL DE CONFIRMACIÓN PERSONALIZADO */
+    .modal-confirm {
+        color: #636363;
+        width: 350px;
+    }
+    .modal-confirm .modal-content {
+        padding: 20px;
+        border-radius: 8px;
+        border: none;
+        text-align: center;
+    }
+    .modal-confirm .modal-header {
+        border-bottom: none;
+        position: relative;
+        justify-content: center;
+    }
+    .modal-confirm .icon-box {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 15px;
+        border-radius: 50%;
+        background: #f2f2f2;
+        font-size: 2.5rem;
+    }
+    .modal-confirm .btn {
+        min-width: 100px;
+        border-radius: 6px;
+        margin: 0 5px;
+    }
+    .modal-confirm .btn-danger {
+        background: var(--danger);
+        color: #fff;
+        border: none;
+    }
+    .modal-confirm .btn-secondary {
+        background: var(--gray-light);
+        color: var(--gray-dark);
+        border: none;
+    }
+    @media (max-width: 900px) {
+        .stats-row, .departments-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:admin_panel' %}">Panel Admin</a></li>
+        <li class="breadcrumb-item active">Gestionar Departamentos</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Header principal -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-building"></i>
+            Gestionar Departamentos
+        </h1>
+        <p class="page-subtitle">Administra y organiza los departamentos del sistema</p>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="stats-row mb-5">
+    <div class="stat-card info">
+        <i class="fas fa-list stat-icon"></i>
+        <div class="stat-value">{{ total_departamentos }}</div>
+        <div class="stat-label">Total Departamentos</div>
+    </div>
+    <div class="stat-card success">
+        <i class="fas fa-check-circle stat-icon"></i>
+        <div class="stat-value">{{ departamentos_activos }}</div>
+        <div class="stat-label">Activos</div>
+    </div>
+    <div class="stat-card danger">
+        <i class="fas fa-times-circle stat-icon"></i>
+        <div class="stat-value>{{ departamentos_inactivos }}</div>
+        <div class="stat-label">Inactivos</div>
+    </div>
+    <div class="stat-card warning">
+        <i class="fas fa-handshake stat-icon"></i>
+        <div class="stat-value>{{ departamentos_con_asignaciones }}</div>
+        <div class="stat-label">Con Asignaciones</div>
+    </div>
+</div>
+
+<!-- Formulario rápido -->
+<div class="quick-form" style="background: white; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-soft); border-left: 5px solid var(--info); margin-bottom: 2rem; padding: 2rem;">
+    <h5 style="color: var(--primary-dark); font-weight: 700; margin-bottom: 1.5rem;"><i class="fas fa-plus-circle me-2"></i>Agregar Nuevo Departamento</h5>
+    <form method="post" class="row g-3">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="crear">
+        <div class="col-md-4">
+            <input type="text" name="nombre" class="form-control" placeholder="Nombre del departamento" required>
+        </div>
+        <div class="col-md-6">
+            <input type="text" name="descripcion" class="form-control" placeholder="Descripción (opcional)">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-plus me-2"></i>Agregar
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Selector de vista -->
+<div class="view-toggle d-flex justify-content-end mb-4">
+    <div class="btn-group" role="group" aria-label="Vista de departamentos">
+        <button type="button" class="btn view-toggle-btn active" data-view="cards">
+            <i class="fas fa-th-large me-2"></i>Tarjetas
+        </button>
+        <button type="button" class="btn view-toggle-btn" data-view="table">
+            <i class="fas fa-table me-2"></i>Tabla
+        </button>
+    </div>
+</div>
+
+<!-- Lista de departamentos -->
+<div class="management-section" style="background: none; box-shadow: none; padding: 0; margin-bottom: 0;">
+    <h5 style="color: var(--primary-dark); font-weight: 700; margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 2px solid var(--gray-light);"><i class="fas fa-list me-2"></i>Departamentos Registrados ({% if departamentos %}{{ departamentos.count|default:'0' }}{% else %}0{% endif %})</h5>
+
+    {% if departamentos %}
+        <!-- Vista de tarjetas -->
+        <div class="view-cards view-section active">
+            <div class="departments-grid" style="gap: 2.5rem;">
+                {% for departamento in departamentos %}
+                    <div class="department-card {% if not departamento.activo %}inactive{% endif %}" style="padding-bottom: 0.5rem;">
+                        <div class="department-header" style="padding-bottom: 0.7rem;">
+                            <span class="department-icon"><i class="fas fa-building"></i></span>
+                            <div class="department-title" style="font-size: 1.18rem;">{{ departamento.nombre }}</div>
+                        </div>
+                        <div class="department-description" style="margin: 1rem 0 0.7rem 0; min-height: 2.5rem;">
+                            {% if departamento.descripcion %}
+                                {{ departamento.descripcion }}
+                            {% else %}
+                                <span class="text-muted">Sin descripción disponible</span>
+                            {% endif %}
+                        </div>
+                        <div class="department-badges mb-2" style="margin-bottom: 0.7rem;">
+                            <span class="status-badge {% if departamento.activo %}status-active{% else %}status-inactive{% endif %}">
+                                <i class="fas fa-circle"></i>
+                                {% if departamento.activo %}Activo{% else %}Inactivo{% endif %}
+                            </span>
+                            <span class="assignment-count">
+                                <i class="fas fa-handshake"></i>
+                                {{ departamento.asignaciones_count }} asignaciones
+                            </span>
+                        </div>
+                        <div class="department-meta mb-2" style="font-size: 0.88rem;">
+                            <i class="fas fa-calendar-plus"></i>
+                            Creado el {{ departamento.created_at|date:"d/m/Y" }}
+                            {% if departamento.usuario_creacion %}
+                                <br><i class="fas fa-user"></i>
+                                por {{ departamento.usuario_creacion.username }}
+                            {% endif %}
+                        </div>
+                        <div class="department-actions mt-auto" style="gap: 0.3rem;">
+                            <button class="btn btn-department-action btn-info" onclick="editDepartment({{ departamento.id }}, '{{ departamento.nombre }}', '{{ departamento.descripcion }}')">
+                                <i class="fas fa-edit"></i>Editar
+                            </button>
+                            <a href="{% url 'core:inventario_departamento' %}" class="btn btn-department-action btn-outline-primary">
+                                <i class="fas fa-eye"></i>Ver
+                            </a>
+                            <button class="btn btn-department-action {% if departamento.activo %}btn-warning{% else %}btn-success{% endif %}" onclick="toggleDepartment({{ departamento.id }}, '{{ departamento.nombre }}', {{ departamento.activo|yesno:'true,false' }})">
+                                <i class="fas {% if departamento.activo %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                {% if departamento.activo %}Desactivar{% else %}Activar{% endif %}
+                            </button>
+                            <button class="btn btn-department-action btn-outline-danger" onclick="deleteDepartment({{ departamento.id }}, '{{ departamento.nombre }}')">
+                                <i class="fas fa-trash"></i>Eliminar
+                            </button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Vista de tabla -->
+        <div class="view-table view-section" style="display:none;">
+            <div class="table-responsive">
+                <table class="table table-departments">
+                    <thead style="background: var(--gradient-primary); color: white;">
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Descripción</th>
+                            <th>Empleados</th>
+                            <th>Asignaciones</th>
+                            <th>Fecha Creación</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for departamento in departamentos %}
+                        <tr class="{% if not departamento.activo %}inactive-row{% endif %}">
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="department-icon me-2" style="width: 35px; height: 35px; font-size: 1rem;"><i class="fas fa-building"></i></span>
+                                    <strong>{{ departamento.nombre }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                {% if departamento.descripcion %}
+                                    {{ departamento.descripcion|truncatechars:50 }}
+                                {% else %}
+                                    <em class="text-muted">Sin descripción</em>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">{{ departamento.empleados_count }}</span>
+                            </td>
+                            <td>
+                                <span class="assignment-count">
+                                    <i class="fas fa-handshake me-1"></i>{{ departamento.asignaciones_count }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>{{ departamento.created_at|date:"d/m/Y" }}</small>
+                                {% if departamento.usuario_creacion %}
+                                    <br><small class="text-muted">{{ departamento.usuario_creacion.username }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="status-badge {% if departamento.activo %}status-active{% else %}status-inactive{% endif %}">
+                                    {% if departamento.activo %}Activo{% else %}Inactivo{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <button class="btn btn-department-action btn-info" title="Editar" onclick="editDepartment({{ departamento.id }}, '{{ departamento.nombre }}', '{{ departamento.descripcion }}')">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-department-action {% if departamento.activo %}btn-warning{% else %}btn-success{% endif %}" title="{% if departamento.activo %}Desactivar{% else %}Activar{% endif %}" onclick="toggleDepartment({{ departamento.id }}, '{{ departamento.nombre }}', {{ departamento.activo|yesno:'true,false' }})">
+                                        <i class="fas {% if departamento.activo %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                    </button>
+                                    <a href="{% url 'core:inventario_departamento' %}" class="btn btn-department-action btn-outline-primary" title="Ver Asignaciones">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button class="btn btn-department-action btn-outline-danger" title="Eliminar" onclick="deleteDepartment({{ departamento.id }}, '{{ departamento.nombre }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-building"></i></div>
+            <div class="empty-title">No hay departamentos registrados</div>
+            <div class="empty-description">Crea el primer departamento para organizar las asignaciones</div>
+            <button class="btn btn-info" data-bs-toggle="modal" data-bs-target="#addDepartmentModal">
+                <i class="fas fa-plus me-2"></i>Crear Primer Departamento
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Información adicional -->
+{% if departamentos %}
+<div class="management-section mt-5" style="background: white; border-radius: var(--border-radius-lg); box-shadow: var(--shadow-soft); margin-top: 3rem; padding: 2.5rem 2rem 2rem 2rem;">
+    <h5 style="color: var(--primary-dark); font-weight: 700; margin-bottom: 2.2rem; border-bottom: 2px solid var(--gray-light); padding-bottom: 0.7rem;"><i class="fas fa-chart-bar me-2"></i>Estadísticas de Departamentos</h5>
+    <div class="row g-5">
+        <div class="col-md-6">
+            <h6 style="font-weight: 700; color: var(--primary-dark);">Departamentos más activos</h6>
+            <p class="text-muted mb-3" style="font-size: 0.98rem;">Ordenados por número de asignaciones</p>
+            {% for departamento in departamentos|slice:":5" %}
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span>{{ departamento.nombre }}</span>
+                    <span class="badge" style="background: var(--info); color: white;">{{ departamento.asignaciones_count }} asignaciones</span>
+                </div>
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <h6 style="font-weight: 700; color: var(--primary-dark);">Información del sistema</h6>
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span>Departamentos activos</span>
+                <span class="badge" style="background: var(--success); color: white;">{{ departamentos_activos }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                <span>Total de empleados</span>
+                <span class="badge" style="background: var(--warning); color: var(--gray-dark);">{{ empleados_activos|default:0 }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center py-2">
+                <span>Asignaciones totales</span>
+                <span class="badge" style="background: var(--primary); color: white;">{{ total_asignaciones|default:0 }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Modal para agregar departamento -->
+<div class="modal fade" id="addDepartmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle me-2"></i>Nuevo Departamento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="crear">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="modalNombre" class="form-label">Nombre del Departamento *</label>
+                        <input type="text" name="nombre" id="modalNombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalDescripcion" class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="modalDescripcion" class="form-control" rows="3"
+                                  placeholder="Descripción opcional del departamento"></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>Consejo:</strong> Un departamento bien definido facilita la gestión de asignaciones y el seguimiento de equipos.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-save me-2"></i>Guardar Departamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para editar departamento -->
+<div class="modal fade" id="editDepartmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Editar Departamento
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" id="editForm">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="editar">
+                <input type="hidden" name="departamento_id" id="editDepartmentId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label">Nombre del Departamento *</label>
+                        <input type="text" name="nombre" id="editNombre" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescripcion" class="form-label">Descripción</label>
+                        <textarea name="descripcion" id="editDescripcion" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-info">
+                        <i class="fas fa-save me-2"></i>Actualizar Departamento
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL CONFIRMAR ACCIÓN -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-confirm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="icon-box" id="confirmModalIcon">
+          <i class="fas fa-question-circle text-warning"></i>
+        </div>
+      </div>
+      <div class="modal-body">
+        <h5 id="confirmModalTitle">¿Estás seguro?</h5>
+        <p id="confirmModalText">¿Deseas realizar esta acción?</p>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmModalBtn">Sí, continuar</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function editDepartment(id, nombre, descripcion) {
+        document.getElementById('editDepartmentId').value = id;
+        document.getElementById('editNombre').value = nombre;
+        document.getElementById('editDescripcion').value = descripcion;
+
+        var modal = new bootstrap.Modal(document.getElementById('editDepartmentModal'));
+        modal.show();
+    }
+
+    // MODAL DE CONFIRMACIÓN PERSONALIZADO
+    let confirmAction = null;
+    function showConfirmModal({title, text, icon, btnClass, onConfirm}) {
+        document.getElementById('confirmModalTitle').innerText = title;
+        document.getElementById('confirmModalText').innerText = text;
+        document.getElementById('confirmModalIcon').innerHTML = icon;
+        const btn = document.getElementById('confirmModalBtn');
+        btn.className = 'btn ' + btnClass;
+        confirmAction = onConfirm;
+        const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        modal.show();
+    }
+    document.getElementById('confirmModalBtn').onclick = function() {
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmModal'));
+        modal.hide();
+        setTimeout(function() {
+            if (typeof confirmAction === 'function') confirmAction();
+        }, 250); // Espera a que el modal termine de cerrarse
+    };
+
+    function toggleDepartment(id, nombre, isActive) {
+        showConfirmModal({
+            title: isActive ? 'Desactivar departamento' : 'Activar departamento',
+            text: `¿Seguro que quieres ${isActive ? 'desactivar' : 'activar'} el departamento "${nombre}"?`,
+            icon: isActive ? '<i class="fas fa-pause-circle text-warning"></i>' : '<i class="fas fa-play-circle text-success"></i>',
+            btnClass: isActive ? 'btn-warning' : 'btn-success',
+            onConfirm: function() {
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.innerHTML = `
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_activo">
+                    <input type="hidden" name="departamento_id" value="${id}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    function deleteDepartment(id, nombre) {
+        showConfirmModal({
+            title: 'Eliminar departamento',
+            text: `¿Seguro que deseas eliminar el departamento "${nombre}"? Esta acción es irreversible.`,
+            icon: '<i class="fas fa-trash-alt text-danger"></i>',
+            btnClass: 'btn-danger',
+            onConfirm: function() {
+                const form = document.createElement('form');
+                form.method = 'post';
+                form.style.display = 'none';
+                form.innerHTML = `
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="eliminar">
+                    <input type="hidden" name="departamento_id" value="${id}">
+                `;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+
+    // Limpiar modal al cerrarlo
+    document.getElementById('addDepartmentModal').addEventListener('hidden.bs.modal', function () {
+        this.querySelector('form').reset();
+    });
+
+    // Cambiar vista de departamentos - MEJORADO
+    document.addEventListener('DOMContentLoaded', function() {
+        const viewButtons = document.querySelectorAll('.view-toggle-btn');
+        const cardsView = document.querySelector('.view-cards');
+        const tableView = document.querySelector('.view-table');
+        // Guardar la vista seleccionada en localStorage
+        function showView(view) {
+            if (view === 'cards') {
+                cardsView.style.display = '';
+                tableView.style.display = 'none';
+            } else {
+                cardsView.style.display = 'none';
+                tableView.style.display = '';
+            }
+            localStorage.setItem('departamentosView', view);
+        }
+        viewButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const view = this.getAttribute('data-view');
+                viewButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                showView(view);
+            });
+        });
+        // Inicializar vista según localStorage o por defecto tabla
+        const savedView = localStorage.getItem('departamentosView') || 'table';
+        viewButtons.forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.view-toggle-btn[data-view="' + savedView + '"]').classList.add('active');
+        showView(savedView);
+    });
+</script>
+{% endblock %}

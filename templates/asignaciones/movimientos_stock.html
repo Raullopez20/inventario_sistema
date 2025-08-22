@@ -1,0 +1,912 @@
+{% extends 'base.html' %}
+
+{% block title %}Movimientos de Stock - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        transform: translate(-40px, 40px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .page-subtitle {
+        font-size: 1.15rem;
+        opacity: 0.92;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.3rem 1.5rem 1.1rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.info { border-left-color: var(--info); }
+    .stat-icon {
+        font-size: 2.2rem;
+        position: absolute;
+        top: 1.1rem;
+        right: 1.2rem;
+        opacity: 0.13;
+        z-index: 1;
+    }
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        z-index: 2;
+        position: relative;
+    }
+    .stat-label {
+        color: var(--gray-dark);
+        font-weight: 500;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 0.2rem;
+        z-index: 2;
+        position: relative;
+    }
+    .filter-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(26,35,126,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.7rem;
+        border-bottom: 1px solid var(--gray-light);
+    }
+    .filter-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .filter-toggle {
+        background: none;
+        border: none;
+        color: var(--primary);
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 500;
+        font-size: 1rem;
+    }
+    .filter-toggle:hover {
+        color: var(--primary-dark);
+        transform: translateX(-2px);
+    }
+    .search-container {
+        position: relative;
+        margin-bottom: 1.2rem;
+    }
+    .search-input {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.9rem 1rem 0.9rem 2.5rem;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: #fff;
+        width: 100%;
+    }
+    .search-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.15rem rgba(26,35,126,0.13);
+        outline: none;
+        transform: translateY(-1px);
+    }
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-dark);
+        font-size: 1.1rem;
+        transition: all 0.3s;
+    }
+    .search-input:focus + .search-icon {
+        color: var(--primary);
+        transform: translateY(-50%) scale(1.1);
+    }
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.2rem;
+        align-items: end;
+    }
+    .form-group {
+        position: relative;
+    }
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: #fff;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.13rem rgba(26,35,126,0.13);
+        outline: none;
+        transform: translateY(-1px);
+    }
+    .btn-group-filter {
+        display: flex;
+        gap: 0.8rem;
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    }
+    .btn-outline-secondary {
+        border: 2px solid var(--gray-light);
+        color: var(--gray-dark);
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-outline-secondary:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+    .movements-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+    .movement-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        border: none;
+        transition: box-shadow 0.25s, transform 0.18s;
+        overflow: hidden;
+        position: relative;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 0;
+    }
+    .movement-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 6px;
+        height: 100%;
+        background: var(--info);
+        transition: width 0.2s, background 0.2s;
+        border-radius: 0 8px 8px 0;
+    }
+    .movement-card.alta::before { background: var(--success); }
+    .movement-card.baja::before { background: var(--danger); }
+    .movement-card.transferencia::before { background: var(--warning); }
+    .movement-card.actualizacion::before { background: var(--info); }
+    .movement-card.reparacion::before { background: var(--primary); }
+    .movement-card:hover {
+        transform: translateY(-4px) scale(1.012);
+        box-shadow: 0 8px 32px rgba(26,35,126,0.13);
+    }
+    .movement-card:hover::before {
+        width: 12px;
+    }
+    .movement-header {
+        padding: 1.3rem 1.7rem 1rem 2.2rem;
+        border-bottom: 1px solid var(--gray-light);
+        background: linear-gradient(90deg, rgba(26,35,126,0.03) 0%, rgba(26,35,126,0.01) 100%);
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+    .movement-product-info {
+        margin-bottom: 0;
+        flex: 1;
+    }
+    .product-name {
+        font-size: 1.13rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0 0 0.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .product-name i {
+        font-size: 1.1rem;
+        color: var(--primary);
+        margin-right: 0.4rem;
+    }
+    .product-details {
+        font-size: 0.97rem;
+        color: var(--gray-dark);
+        margin-bottom: 0.2rem;
+    }
+    .product-serial {
+        font-size: 0.85rem;
+        color: var(--gray-dark);
+        font-family: 'JetBrains Mono', 'Fira Mono', 'Courier New', monospace;
+        background: var(--gray-light);
+        padding: 0.18rem 0.6rem;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 0.1rem;
+    }
+    .movement-type-badge {
+        padding: 0.45rem 1.1rem;
+        border-radius: 18px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: 1rem;
+    }
+    .type-alta {
+        background: linear-gradient(135deg, var(--success), #66bb6a);
+        color: white;
+    }
+    .type-baja {
+        background: linear-gradient(135deg, var(--danger), #ef5350);
+        color: white;
+    }
+    .type-transferencia {
+        background: linear-gradient(135deg, var(--warning), #ffca28);
+        color: var(--gray-dark);
+    }
+    .type-actualizacion {
+        background: linear-gradient(135deg, var(--info), #42a5f5);
+        color: white;
+    }
+    .type-reparacion {
+        background: var(--gradient-primary);
+        color: white;
+    }
+    .movement-body {
+        padding: 1.5rem 2.2rem 1.2rem 2.2rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    .movement-meta {
+        display: flex;
+        gap: 2.2rem;
+        font-size: 0.97rem;
+        color: var(--gray-dark);
+        margin-bottom: 0.7rem;
+    }
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .meta-icon {
+        font-size: 1rem;
+        color: var(--primary);
+    }
+    .location-info {
+        background: rgba(26,35,126,0.06);
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.2rem;
+        margin: 0.7rem 0 0.7rem 0;
+        border-left: 3px solid var(--primary);
+    }
+    .location-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .location-value {
+        color: var(--gray-dark);
+        margin-top: 0.2rem;
+    }
+    .details-description {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.2rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid var(--info);
+        font-size: 0.97rem;
+        color: var(--gray-dark);
+    }
+    .movement-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--gray-light);
+    }
+    .btn-details {
+        background: none;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.93rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 1px 4px rgba(26,35,126,0.06);
+    }
+    .btn-details:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+    }
+    .details-panel {
+        background: linear-gradient(135deg, rgba(26,35,126,0.05), rgba(26,35,126,0.02));
+        border-top: 1px solid var(--gray-light);
+        padding: 0;
+        overflow: hidden;
+        display: none;
+    }
+    .details-panel.show {
+        display: block;
+    }
+    .details-content {
+        padding: 1.5rem 2.2rem;
+    }
+    .details-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+    }
+    .values-comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    .values-section {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1rem;
+        border-left: 4px solid var(--success);
+    }
+    .values-section.old {
+        border-left-color: var(--danger);
+    }
+    .values-title {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.8rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .values-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .values-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.4rem 0;
+        border-bottom: 1px solid var(--gray-light);
+        font-size: 0.93rem;
+    }
+    .values-list li:last-child {
+        border-bottom: none;
+    }
+    .value-key {
+        font-weight: 600;
+        color: var(--gray-dark);
+    }
+    .value-content {
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--gray-light);
+        margin-bottom: 1.5rem;
+        opacity: 0.7;
+    }
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 0.8rem;
+    }
+    .empty-description {
+        color: var(--gray-dark);
+        font-size: 1rem;
+        opacity: 0.8;
+        margin-bottom: 0;
+    }
+    .info-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        overflow: hidden;
+        margin-top: 2rem;
+        border-top: 4px solid var(--primary);
+    }
+    .info-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 1.5rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .info-body {
+        padding: 2rem;
+    }
+    .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2rem;
+    }
+    .info-section h6 {
+        color: var(--primary-dark);
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1rem;
+    }
+    .type-legend {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .type-legend li {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid var(--gray-light);
+    }
+    .type-legend li:last-child {
+        border-bottom: none;
+    }
+    .tips-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    .tips-list li {
+        padding: 0.6rem 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.8rem;
+        color: var(--gray-dark);
+    }
+    .tips-list li::before {
+        content: '💡';
+        font-size: 1rem;
+        flex-shrink: 0;
+        margin-top: 0.1rem;
+    }
+    @media (max-width: 900px) {
+        .stats-row, .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Movimientos de Stock</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Header principal -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-exchange-alt"></i>
+            Movimientos de Stock
+        </h1>
+        <p class="page-subtitle">Historial completo de movimientos y cambios en el inventario</p>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="stats-row">
+    <div class="stat-card success">
+        <i class="fas fa-plus-circle stat-icon"></i>
+        <div class="stat-value">{{ total_altas|default:0 }}</div>
+        <div class="stat-label">Altas</div>
+    </div>
+    <div class="stat-card danger">
+        <i class="fas fa-minus-circle stat-icon"></i>
+        <div class="stat-value">{{ total_bajas|default:0 }}</div>
+        <div class="stat-label">Bajas</div>
+    </div>
+    <div class="stat-card warning">
+        <i class="fas fa-arrows-alt stat-icon"></i>
+        <div class="stat-value">{{ total_transferencias|default:0 }}</div>
+        <div class="stat-label">Transferencias</div>
+    </div>
+    <div class="stat-card info">
+        <i class="fas fa-edit stat-icon"></i>
+        <div class="stat-value">{{ total_actualizaciones|default:0 }}</div>
+        <div class="stat-label">Actualizaciones</div>
+    </div>
+</div>
+
+<!-- Panel de filtros avanzado -->
+<div class="filter-panel">
+    <div class="filter-header">
+        <h3 class="filter-title">
+            <i class="fas fa-filter"></i>
+            Filtros de Búsqueda
+        </h3>
+        <button type="button" class="filter-toggle" onclick="toggleAdvancedFilters()">
+            <span id="filter-toggle-text">Mostrar filtros avanzados</span>
+            <i class="fas fa-chevron-down" id="filter-toggle-icon"></i>
+        </button>
+    </div>
+
+    <form method="get" id="filterForm">
+        <!-- Búsqueda principal -->
+        <div class="search-container">
+            <input type="text" name="search" class="search-input" placeholder="Buscar por producto, descripción, usuario..." value="{{ search }}" autocomplete="off">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+
+        <!-- Filtros básicos -->
+        <div class="filter-row">
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-tag"></i>
+                    Tipo de Movimiento
+                </label>
+                <select name="tipo_movimiento" class="form-select">
+                    <option value="">Todos los tipos</option>
+                    {% for value, label in tipos_movimiento %}
+                        <option value="{{ value }}" {% if value == tipo_selected %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group" id="advanced-filters" style="display: none;">
+                <label class="form-label">
+                    <i class="fas fa-calendar"></i>
+                    Fecha desde
+                </label>
+                <input type="date" name="fecha_desde" class="form-control" value="{{ fecha_desde }}">
+            </div>
+
+            <div class="form-group" id="advanced-filters-2" style="display: none;">
+                <label class="form-label">
+                    <i class="fas fa-calendar"></i>
+                    Fecha hasta
+                </label>
+                <input type="date" name="fecha_hasta" class="form-control" value="{{ fecha_hasta }}">
+            </div>
+
+            <div class="form-group">
+                <div class="btn-group-filter">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        Buscar
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="limpiarFiltros()">
+                        <i class="fas fa-times"></i>
+                        Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de movimientos -->
+<div class="movements-grid" id="movementsGrid">
+    {% for movimiento in movimientos %}
+        <div class="movement-card {{ movimiento.tipo_movimiento|lower }}">
+            <div class="movement-header">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div class="movement-product-info">
+                        <div class="product-name">
+                            <i class="fas fa-box"></i>
+                            {{ movimiento.producto.nombre|default:'Producto desconocido' }}
+                        </div>
+                        <div class="product-details">
+                            {{ movimiento.producto.descripcion|default:'Sin descripción' }}
+                        </div>
+                        <div class="product-serial">
+                            {{ movimiento.producto.numero_serie|default:'-' }}
+                        </div>
+                    </div>
+                    <span class="movement-type-badge type-{{ movimiento.tipo_movimiento|lower }}">
+                        <i class="fas fa-circle"></i>
+                        {{ movimiento.get_tipo_movimiento_display }}
+                    </span>
+                </div>
+            </div>
+            <div class="movement-body">
+                <div class="movement-meta">
+                    <div class="meta-item">
+                        <i class="fas fa-user meta-icon"></i>
+                        {{ movimiento.usuario.username|default:'-' }}
+                    </div>
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-alt meta-icon"></i>
+                        {{ movimiento.fecha|date:'d/m/Y H:i' }}
+                    </div>
+                </div>
+                {% if movimiento.ubicacion_anterior or movimiento.ubicacion_nueva %}
+                <div class="location-info">
+                    <div class="location-label">Ubicación anterior:</div>
+                    <div class="location-value">{{ movimiento.ubicacion_anterior|default:'-' }}</div>
+                    <div class="location-label">Ubicación nueva:</div>
+                    <div class="location-value">{{ movimiento.ubicacion_nueva|default:'-' }}</div>
+                </div>
+                {% endif %}
+                {% if movimiento.descripcion %}
+                <div class="details-description">
+                    {{ movimiento.descripcion }}
+                </div>
+                {% endif %}
+                <div class="movement-actions">
+                    <button type="button" class="btn-details" onclick="toggleDetails('details-{{ movimiento.id }}')">
+                        <i class="fas fa-info-circle"></i>
+                        Detalles
+                    </button>
+                </div>
+            </div>
+            <div class="details-panel collapse" id="details-{{ movimiento.id }}">
+                <div class="details-content">
+                    <div class="details-header">
+                        <i class="fas fa-info-circle"></i>
+                        Detalles del movimiento
+                    </div>
+                    {% if movimiento.valores_anteriores or movimiento.valores_nuevos %}
+                    <div class="values-comparison">
+                        {% if movimiento.valores_anteriores %}
+                        <div class="values-section old">
+                            <div class="values-title">Valores anteriores</div>
+                            <ul class="values-list">
+                                {% for key, value in movimiento.valores_anteriores.items %}
+                                <li><span class="value-key">{{ key }}</span> <span class="value-content">{{ value }}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        {% if movimiento.valores_nuevos %}
+                        <div class="values-section">
+                            <div class="values-title">Valores nuevos</div>
+                            <ul class="values-list">
+                                {% for key, value in movimiento.valores_nuevos.items %}
+                                <li><span class="value-key">{{ key }}</span> <span class="value-content">{{ value }}</span></li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="details-description">
+                        No hay detalles adicionales para este movimiento.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="empty-state">
+            <div class="empty-icon"><i class="fas fa-box-open"></i></div>
+            <div class="empty-title">No se encontraron movimientos</div>
+            <div class="empty-description">Prueba ajustando los filtros o realizando una nueva búsqueda.</div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Panel informativo -->
+<div class="info-panel">
+    <div class="info-header">
+        <i class="fas fa-info-circle"></i>
+        Información sobre los movimientos de stock
+    </div>
+    <div class="info-body">
+        <div class="info-grid">
+            <div class="info-section">
+                <h6><i class="fas fa-clipboard-list"></i> Tipos de movimientos</h6>
+                <ul class="type-legend">
+                    <li><span class="movement-type-badge type-alta"><i class="fas fa-plus-circle"></i> Alta</span></li>
+                    <li><span class="movement-type-badge type-baja"><i class="fas fa-minus-circle"></i> Baja</span></li>
+                    <li><span class="movement-type-badge type-transferencia"><i class="fas fa-arrows-alt"></i> Transferencia</span></li>
+                    <li><span class="movement-type-badge type-actualizacion"><i class="fas fa-edit"></i> Actualización</span></li>
+                    <li><span class="movement-type-badge type-reparacion"><i class="fas fa-tools"></i> Reparación</span></li>
+                </ul>
+            </div>
+            <div class="info-section">
+                <h6><i class="fas fa-lightbulb"></i> Consejos de uso</h6>
+                <ul class="tips-list">
+                    <li>Utiliza los filtros avanzados para encontrar movimientos por fecha.</li>
+                    <li>Puedes buscar por nombre de producto, usuario o descripción.</li>
+                    <li>Haz clic en "Detalles" para ver información ampliada de cada movimiento.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleAdvancedFilters() {
+    const adv1 = document.getElementById('advanced-filters');
+    const adv2 = document.getElementById('advanced-filters-2');
+    const text = document.getElementById('filter-toggle-text');
+    const icon = document.getElementById('filter-toggle-icon');
+    if (adv1.style.display === 'none') {
+        adv1.style.display = 'block';
+        adv2.style.display = 'block';
+        text.textContent = 'Ocultar filtros avanzados';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    } else {
+        adv1.style.display = 'none';
+        adv2.style.display = 'none';
+        text.textContent = 'Mostrar filtros avanzados';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    }
+}
+function limpiarFiltros() {
+    document.getElementById('filterForm').reset();
+    document.getElementById('filterForm').submit();
+}
+function toggleDetails(id) {
+    const panel = document.getElementById(id);
+    if (panel.classList.contains('show')) {
+        panel.classList.remove('show');
+    } else {
+        panel.classList.add('show');
+    }
+}
+</script>
+{% endblock %}

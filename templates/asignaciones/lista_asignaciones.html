@@ -1,0 +1,839 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista de Asignaciones - Sistema de Inventario{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary: #1a237e;
+        --primary-light: #3949ab;
+        --primary-dark: #0d133d;
+        --success: #43a047;
+        --info: #1976d2;
+        --warning: #fbc02d;
+        --danger: #e53935;
+        --gray-bg: #f4f6fa;
+        --gray-light: #e3e6ef;
+        --gray-dark: #374151;
+        --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.08);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+        --border-radius: 12px;
+        --border-radius-lg: 16px;
+    }
+    .page-header {
+        background: var(--gradient-primary);
+        color: white;
+        padding: 2.5rem 0 2rem 0;
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+        margin: -2rem -2rem 2rem -2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--shadow-soft);
+    }
+    .page-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 180px;
+        height: 180px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 50%;
+        transform: translate(60px, -60px);
+    }
+    .page-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 120px;
+        height: 120px;
+        background: rgba(255,255,255,0.04);
+        border-radius: 50%;
+        transform: translate(-40px, 40px);
+    }
+    .page-header .container {
+        position: relative;
+        z-index: 2;
+    }
+    .page-title {
+        font-size: 2.3rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    .page-title i {
+        font-size: 2rem;
+        margin-right: 0.7rem;
+        background: rgba(255,255,255,0.13);
+        padding: 0.7rem;
+        border-radius: var(--border-radius);
+    }
+    .page-subtitle {
+        font-size: 1.15rem;
+        opacity: 0.92;
+        margin-top: 0.5rem;
+        margin-bottom: 0;
+    }
+    .assignment-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.5rem 2.2rem 1.1rem 2.2rem;
+        box-shadow: var(--shadow-soft);
+        transition: box-shadow 0.25s, transform 0.18s;
+        margin-bottom: 1.5rem;
+        border-left: 6px solid var(--success);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    .assignment-card.devuelta {
+        border-left-color: var(--gray-dark);
+        opacity: 0.8;
+    }
+    .assignment-card.vencida {
+        border-left-color: var(--danger);
+    }
+    .assignment-card:hover {
+        transform: translateY(-4px) scale(1.012);
+        box-shadow: var(--shadow-hover);
+    }
+    .assignment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-bottom: 1px solid var(--gray-light);
+        background: linear-gradient(90deg, rgba(26,35,126,0.03) 0%, rgba(26,35,126,0.01) 100%);
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+    .assignment-product-info {
+        flex: 1;
+    }
+    .product-name {
+        font-size: 1.13rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0 0 0.2rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .product-name i {
+        font-size: 1.1rem;
+        color: var(--primary);
+        margin-right: 0.4rem;
+    }
+    .product-details {
+        font-size: 0.97rem;
+        color: var(--gray-dark);
+        margin-bottom: 0.2rem;
+    }
+    .product-serial {
+        font-size: 0.85rem;
+        color: var(--gray-dark);
+        font-family: 'JetBrains Mono', 'Fira Mono', 'Courier New', monospace;
+        background: var(--gray-light);
+        padding: 0.18rem 0.6rem;
+        border-radius: 4px;
+        display: inline-block;
+        margin-top: 0.1rem;
+    }
+    .assignment-type-badge {
+        padding: 0.45rem 1.1rem;
+        border-radius: 18px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border: none;
+        box-shadow: 0 2px 8px rgba(26,35,126,0.07);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-left: 1rem;
+    }
+    .type-entrega {
+        background: var(--gradient-primary);
+        color: white;
+    }
+    .type-prestamo {
+        background: linear-gradient(135deg, var(--warning), #ffca28);
+        color: var(--gray-dark);
+    }
+    .type-mantenimiento {
+        background: linear-gradient(135deg, var(--info), #42a5f5);
+        color: white;
+    }
+    .type-otro {
+        background: linear-gradient(135deg, var(--danger), #ef5350);
+        color: white;
+    }
+    .assignment-body {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 2rem;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    .assignment-meta {
+        min-width: 180px;
+        color: var(--gray-dark);
+        font-size: 0.97rem;
+        margin-bottom: 0.7rem;
+    }
+    .meta-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .meta-value {
+        color: var(--gray-dark);
+        margin-top: 0.2rem;
+    }
+    .assignment-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: flex-end;
+        align-items: center;
+        margin-top: 1rem;
+    }
+    .btn-action {
+        background: none;
+        border: 2px solid var(--primary);
+        color: var(--primary);
+        border-radius: var(--border-radius);
+        padding: 0.6rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.93rem;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        box-shadow: 0 1px 4px rgba(26,35,126,0.06);
+    }
+    .btn-action:hover {
+        background: var(--primary);
+        color: white;
+        transform: translateY(-1px);
+    }
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background: white;
+        border-radius: var(--border-radius-lg);
+        box-shadow: var(--shadow-soft);
+        margin: 2rem 0;
+    }
+    .empty-state i {
+        font-size: 4rem;
+        color: var(--gray-light);
+        margin-bottom: 1rem;
+    }
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.2rem;
+        margin-bottom: 2rem;
+    }
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 1.3rem 1.5rem 1.1rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        border-left: 5px solid var(--primary);
+        position: relative;
+        overflow: hidden;
+        min-width: 0;
+        transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .stat-card.success { border-left-color: var(--success); }
+    .stat-card.danger { border-left-color: var(--danger); }
+    .stat-card.warning { border-left-color: var(--warning); }
+    .stat-card.info { border-left-color: var(--info); }
+    .stat-icon {
+        font-size: 2.2rem;
+        position: absolute;
+        top: 1.1rem;
+        right: 1.2rem;
+        opacity: 0.13;
+        z-index: 1;
+    }
+    .stat-value {
+        font-size: 2.1rem;
+        font-weight: 700;
+        color: var(--primary-dark);
+        margin: 0;
+        z-index: 2;
+        position: relative;
+    }
+    .stat-label {
+        color: var(--gray-dark);
+        font-weight: 500;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        margin-top: 0.2rem;
+        z-index: 2;
+        position: relative;
+    }
+    .filter-panel {
+        background: white;
+        border-radius: var(--border-radius-lg);
+        padding: 2rem 1.5rem 1.5rem 1.5rem;
+        box-shadow: var(--shadow-soft);
+        margin-bottom: 2rem;
+        border: 1px solid rgba(26,35,126,0.08);
+        position: relative;
+        overflow: hidden;
+    }
+    .filter-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.7rem;
+        border-bottom: 1px solid var(--gray-light);
+    }
+    .filter-title {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.2rem;
+        align-items: end;
+    }
+    .form-group {
+        position: relative;
+    }
+    .form-label {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.93rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .form-control, .form-select {
+        border: 2px solid var(--gray-light);
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s;
+        background: #fff;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.13rem rgba(26,35,126,0.13);
+        outline: none;
+        transform: translateY(-1px);
+    }
+    .btn-group-filter {
+        display: flex;
+        gap: 0.8rem;
+    }
+    .btn-filter-sm {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.45rem 1.1rem;
+        font-weight: 600;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all 0.3s;
+        min-width: 0;
+        line-height: 1.2;
+    }
+    .btn-filter-sm:hover {
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+        box-shadow: var(--shadow-hover);
+        color: white;
+        transform: translateY(-1px);
+    }
+    .btn-primary {
+        background: var(--gradient-primary);
+        border: none;
+        border-radius: var(--border-radius);
+        padding: 0.8rem 1.8rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s;
+    }
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-hover);
+        background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    }
+    .btn-outline-filter-sm {
+        border: 2px solid var(--gray-light);
+        color: var(--gray-dark);
+        border-radius: var(--border-radius);
+        padding: 0.45rem 1.1rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        transition: all 0.3s;
+        min-width: 0;
+        line-height: 1.2;
+        background: none;
+    }
+    .btn-outline-secondary:hover {
+        background: var(--danger);
+        border-color: var(--danger);
+        color: white;
+        transform: translateY(-2px);
+    }
+    @media (max-width: 900px) {
+        .stats-row, .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Asignaciones</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Header principal -->
+<div class="page-header">
+    <div class="container">
+        <h1 class="page-title">
+            <i class="fas fa-exchange-alt"></i>
+            Asignaciones
+        </h1>
+        <p class="page-subtitle">Historial y gestión de asignaciones de productos</p>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="stats-row">
+    <div class="stat-card success">
+        <i class="fas fa-tasks stat-icon"></i>
+        <div class="stat-value">{{ asignaciones.count }}</div>
+        <div class="stat-label">Total</div>
+    </div>
+    <div class="stat-card info">
+        <i class="fas fa-check-circle stat-icon"></i>
+        <div class="stat-value">{{ asignaciones|length }}</div>
+        <div class="stat-label">Activas</div>
+    </div>
+    <div class="stat-card danger">
+        <i class="fas fa-undo stat-icon"></i>
+        <div class="stat-value">0</div>
+        <div class="stat-label">Devueltas</div>
+    </div>
+    <div class="stat-card warning">
+        <i class="fas fa-calendar stat-icon"></i>
+        <div class="stat-value">0</div>
+        <div class="stat-label">Este Mes</div>
+    </div>
+</div>
+
+<!-- Panel de filtros -->
+<div class="filter-panel">
+    <div class="filter-header">
+        <h3 class="filter-title">
+            <i class="fas fa-filter"></i>
+            Filtros de Búsqueda
+        </h3>
+    </div>
+    <form method="get" class="filter-row">
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-search"></i>
+                Buscar
+            </label>
+            <input type="text" name="search" class="form-control" placeholder="Buscar asignaciones..." value="{{ search }}">
+        </div>
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-building"></i>
+                Departamento
+            </label>
+            <select name="departamento" class="form-select">
+                <option value="">Todos los departamentos</option>
+                {% for departamento in departamentos %}
+                    <option value="{{ departamento.id }}" {% if departamento.id|stringformat:"s" == departamento_selected %}selected{% endif %}>
+                        {{ departamento.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-tags"></i>
+                Tipo
+            </label>
+            <select name="tipo_asignacion" class="form-select">
+                <option value="">Todos los tipos</option>
+                {% for value, label in tipos_asignacion %}
+                    <option value="{{ value }}" {% if value == tipo_selected %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">
+                <i class="fas fa-check"></i>
+                Estado
+            </label>
+            <select name="estado" class="form-select">
+                <option value="">Todos los estados</option>
+                <option value="activas" {% if estado_selected == 'activas' %}selected{% endif %}>Activas</option>
+                <option value="devueltas" {% if estado_selected == 'devueltas' %}selected{% endif %}>Devueltas</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" style="opacity:0;">Acción</label>
+            <div class="btn-group-filter">
+                <button type="submit" class="btn btn-primary" style="font-size:1rem; padding:0.15rem 1.5rem;">
+                    <i class="fas fa-filter"></i> Filtrar
+                </button>
+                <button type="button" class="btn btn-outline-secondary" style="font-size:1rem; padding:0.10rem 1.5rem;" onclick="limpiarFiltros()">
+                    <i class="fas fa-times"></i> Limpiar
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Lista de asignaciones -->
+<div class="row">
+    {% for asignacion in asignaciones %}
+        <div class="col-12">
+            <div class="assignment-card {% if asignacion.fecha_devolucion %}devuelta{% endif %}">
+                <div class="assignment-header">
+                    <div class="assignment-product-info">
+                        <div class="product-name">
+                            <i class="fas fa-box"></i>
+                            {{ asignacion.producto.nombre }}
+                        </div>
+                        <div class="product-details">
+                            {{ asignacion.producto.categoria.nombre }} - {{ asignacion.producto.marca.nombre }}
+                        </div>
+                        {% if asignacion.producto.numero_serie %}
+                            <div class="product-serial">S/N: {{ asignacion.producto.numero_serie }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="assignment-type-badge tipo-{{ asignacion.tipo_asignacion|lower }}">
+                        {{ asignacion.get_tipo_asignacion_display }}
+                    </div>
+                </div>
+
+                <div class="assignment-body">
+                    <div class="assignment-meta">
+                        <div class="meta-label">Empleado:</div>
+                        <div class="meta-value">{{ asignacion.empleado_receptor.nombre }}</div>
+                    </div>
+                    <div class="assignment-meta">
+                        <div class="meta-label">Departamento:</div>
+                        <div class="meta-value">{{ asignacion.departamento.nombre }}</div>
+                    </div>
+                    <div class="assignment-meta">
+                        <div class="meta-label">Fecha Entrega:</div>
+                        <div class="meta-value">{{ asignacion.fecha_entrega|date:"d/m/Y" }}</div>
+                    </div>
+                    <div class="assignment-meta">
+                        <div class="meta-label">Estado:</div>
+                        <div class="meta-value">
+                            {% if asignacion.fecha_devolucion %}
+                                <span class="badge bg-danger">Devuelta</span>
+                            {% else %}
+                                <span class="badge bg-success">Activa</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="assignment-actions">
+                    <!-- Botón Ver Detalles -->
+                    <a href="{% url 'asignaciones:detalle_asignacion' asignacion.id %}"
+                       class="btn-action btn-view"
+                       title="Ver Detalles"
+                       data-bs-toggle="tooltip"
+                       tabindex="0"
+                       aria-label="Ver detalles de la asignación">
+                        <i class="fas fa-eye"></i> Ver
+                    </a>
+                    <!-- Botón Ver Producto -->
+                    <a href="{% url 'productos:detalle_producto' asignacion.producto.id %}"
+                       class="btn-action btn-product"
+                       title="Ver Producto"
+                       data-bs-toggle="tooltip"
+                       tabindex="0"
+                       aria-label="Ver detalles del producto">
+                        <i class="fas fa-box"></i> Producto
+                    </a>
+                    {% if not asignacion.fecha_devolucion %}
+                        <!-- Botón Procesar Devolución -->
+                        <a href="{% url 'asignaciones:devolver_producto' asignacion.id %}"
+                           class="btn-action btn-return"
+                           title="Procesar Devolución"
+                           data-bs-toggle="tooltip"
+                           tabindex="0"
+                           aria-label="Procesar devolución">
+                            <i class="fas fa-undo"></i> Devolver
+                        </a>
+                    {% endif %}
+                    <!-- Botón Generar Reporte PDF -->
+                    <a href="{% url 'asignaciones:generar_reporte_asignacion' asignacion.id %}"
+                       class="btn-action btn-report"
+                       title="Generar Reporte PDF"
+                       data-bs-toggle="tooltip"
+                       target="_blank"
+                       rel="noopener"
+                       tabindex="0"
+                       aria-label="Descargar reporte PDF de la asignación">
+                        <i class="fas fa-file-pdf"></i> Reporte
+                    </a>
+                    {% if not asignacion.fecha_devolucion %}
+                        <!-- Botón Enviar Recordatorio -->
+                        <button type="button"
+                                class="btn-action btn-reminder text-warning"
+                                title="Enviar Recordatorio"
+                                data-bs-toggle="tooltip"
+                                onclick="enviarRecordatorio({{ asignacion.id }}, '{{ asignacion.empleado_receptor.nombre|escapejs }}', this)"
+                                tabindex="0"
+                                aria-label="Enviar recordatorio">
+                            <i class="fas fa-bell"></i> Recordatorio
+                        </button>
+                    {% endif %}
+                </div>
+
+                {% if asignacion.observaciones_entrega %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <div class="text-muted small">
+                                <i class="fas fa-comment me-1"></i>
+                                <strong>Observaciones:</strong> {{ asignacion.observaciones_entrega }}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-exchange-alt"></i>
+                <h4>No hay asignaciones</h4>
+                <p>No se encontraron asignaciones que coincidan con los filtros seleccionados.</p>
+                <a href="{% url 'asignaciones:agregar_asignacion' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-2"></i>Crear Primera Asignación
+                </a>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<!-- Acciones en lote -->
+{% if asignaciones %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>Acciones en Lote
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <button class="btn btn-info w-100" onclick="exportarAsignaciones()" id="btnExportar">
+                            <i class="fas fa-download me-2"></i>Exportar a Excel
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-warning w-100" onclick="enviarRecordatoriosMasivos()" id="btnRecordatorios">
+                            <i class="fas fa-bell me-2"></i>Enviar Recordatorios
+                        </button>
+                    </div>
+                    <div class="col-md-4">
+                        <button class="btn btn-secondary w-100" onclick="generarReporteMasivo()" id="btnReporteMasivo">
+                            <i class="fas fa-file-pdf me-2"></i>Reporte General
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Información adicional -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>Resumen de Actividad
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span>Asignaciones este mes</span>
+                    <span class="badge bg-primary">{{ asignaciones.count }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                    <span>Productos más asignados</span>
+                    <span class="badge bg-info">Ver reporte</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2">
+                    <span>Departamentos activos</span>
+                    <span class="badge bg-success">{{ departamentos.count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2"></i>Información del Sistema
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb me-2"></i>
+                    <strong>Tip:</strong> Usa los filtros para encontrar asignaciones específicas más rápidamente.
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Recordatorio:</strong> Procesa las devoluciones pendientes regularmente.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function limpiarFiltros() {
+        window.location.href = "{% url 'asignaciones:lista_asignaciones' %}";
+    }
+
+    // Enviar recordatorio real por AJAX (requiere endpoint en Django)
+    function enviarRecordatorio(asignacionId, empleado, el) {
+        if (!confirm(`¿Enviar recordatorio al empleado "${empleado}" sobre esta asignación?`)) return;
+        el.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+        el.classList.add('disabled');
+        fetch("{% url 'asignaciones:enviar_recordatorio' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ asignacion_id: asignacionId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                el.innerHTML = '<i class="fas fa-check me-2"></i>Enviado';
+                setTimeout(() => {
+                    el.innerHTML = '<i class="fas fa-bell me-2"></i>Enviar Recordatorio';
+                    el.classList.remove('disabled');
+                }, 2000);
+                alert('Recordatorio enviado correctamente.');
+            } else {
+                el.innerHTML = '<i class="fas fa-bell me-2"></i>Enviar Recordatorio';
+                el.classList.remove('disabled');
+                alert(data.error || 'No se pudo enviar el recordatorio.');
+            }
+        })
+        .catch(() => {
+            el.innerHTML = '<i class="fas fa-bell me-2"></i>Enviar Recordatorio';
+            el.classList.remove('disabled');
+            alert('Error al enviar el recordatorio.');
+        });
+    }
+
+    function exportarAsignaciones() {
+        const btn = document.getElementById('btnExportar');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Exportando...';
+        setTimeout(function() {
+            // Simula exportación a CSV
+            let csv = 'ID,Producto,Empleado,Departamento,Tipo,Fecha Entrega,Estado\n';
+            {% for asignacion in asignaciones %}
+                csv += '{{ asignacion.id }},"{{ asignacion.producto.nombre }}","{{ asignacion.empleado_receptor.nombre }}","{{ asignacion.departamento.nombre }}","{{ asignacion.get_tipo_asignacion_display }}","{{ asignacion.fecha_entrega|date:"d/m/Y" }}","{% if asignacion.fecha_devolucion %}Devuelta{% else %}Activa{% endif %}"\n';
+            {% endfor %}
+            let blob = new Blob([csv], { type: 'text/csv' });
+            let link = document.createElement('a');
+            link.href = window.URL.createObjectURL(blob);
+            link.download = 'asignaciones.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-download me-2"></i>Exportar a Excel';
+        }, 1200);
+    }
+
+    function enviarRecordatoriosMasivos() {
+        const btn = document.getElementById('btnRecordatorios');
+        if (confirm('¿Enviar recordatorios a todos los empleados con asignaciones activas?')) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+            setTimeout(function() {
+                alert('Recordatorios enviados correctamente (simulado)');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-bell me-2"></i>Enviar Recordatorios';
+            }, 1500);
+        }
+    }
+
+    function generarReporteMasivo() {
+        const btn = document.getElementById('btnReporteMasivo');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generando...';
+        setTimeout(function() {
+            alert('Reporte general generado correctamente (simulado)');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-file-pdf me-2"></i>Reporte General';
+        }, 1300);
+    }
+
+    // Auto-refresh cada 5 minutos
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+
+    // Tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

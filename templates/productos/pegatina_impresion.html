@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Imprimir Pegatina - {{ producto.numero_serie }}</title>
+    <style>
+        @page {
+            margin: 10mm;
+            size: A4;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            font-size: 12pt;
+        }
+        .pegatina-print {
+            text-align: center;
+            page-break-inside: avoid;
+            margin-bottom: 20px;
+        }
+        .pegatina-image {
+            margin: 10px 0;
+        }
+        .pegatina-image img {
+            max-width: 300px;
+            height: auto;
+        }
+        .pegatina-details {
+            margin-top: 10px;
+            font-size: 10pt;
+        }
+        .print-only {
+            display: block;
+        }
+        .no-print {
+            display: none;
+        }
+        @media screen {
+            .print-only { display: none; }
+            .no-print { display: block; }
+            body { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <h3>Vista previa de impresión</h3>
+        <p>Esta página se imprimirá automáticamente. Cierra la ventana si no deseas imprimir.</p>
+        <hr>
+    </div>
+
+    <div class="pegatina-print">
+        <h3>{{ pegatina.get_tipo_pegatina_display }}</h3>
+
+        <div class="pegatina-image">
+            {% if pegatina.imagen_pegatina %}
+                <img src="{{ pegatina.imagen_pegatina.url }}" alt="Pegatina">
+            {% else %}
+                <p>Imagen no disponible</p>
+            {% endif %}
+        </div>
+
+        <div class="pegatina-details">
+            <strong>{{ producto.numero_serie }}</strong><br>
+            {{ producto.marca.nombre }} {{ producto.modelo }}<br>
+            {{ producto.categoria.nombre }}<br>
+            <small>Generado: {{ pegatina.fecha_generacion|date:"d/m/Y" }}</small>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        }
+    </script>
+</body>
+</html>
+

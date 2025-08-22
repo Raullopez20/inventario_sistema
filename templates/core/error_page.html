@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block extra_css %}
+<style>
+    .error-container {
+        min-height: 60vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+
+    .error-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        padding: 3rem;
+        text-align: center;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    .error-icon {
+        font-size: 4rem;ws
+        color: #dc3545;
+        margin-bottom: 1.5rem;
+    }
+
+    .error-title {
+        color: #dc3545;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .error-message {
+        color: #6c757d;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+        line-height: 1.6;
+    }
+
+    .error-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .technical-details {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        text-align: left;
+    }
+
+    .technical-details h5 {
+        color: #495057;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+
+    .technical-details pre {
+        background: #ffffff;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 1rem;
+        font-size: 0.9rem;
+        color: #495057;
+        overflow-x: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+
+    .error-type-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .error-type-DATABASE_ERROR {
+        background: #ffeaa7;
+        color: #d63031;
+    }
+
+    .error-type-VALIDATION_ERROR {
+        background: #fdcb6e;
+        color: #e17055;
+    }
+
+    .error-type-PERMISSION_ERROR {
+        background: #fd79a8;
+        color: #d63031;
+    }
+
+    .error-type-NOT_FOUND_ERROR {
+        background: #a29bfe;
+        color: #6c5ce7;
+    }
+
+    .error-type-BUSINESS_LOGIC_ERROR {
+        background: #fab1a0;
+        color: #e17055;
+    }
+
+    .error-type-FILE_OPERATION_ERROR {
+        background: #81ecec;
+        color: #00b894;
+    }
+
+    .error-type-UNKNOWN_ERROR {
+        background: #ddd;
+        color: #636e72;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Error del Sistema</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="error-container">
+    <div class="error-card">
+        <div class="error-icon">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+
+        <div class="error-type-badge error-type-{{ error_details.type }}">
+            {{ error_details.type|capfirst }}
+        </div>
+
+        <h1 class="error-title">¡Oops! Algo salió mal</h1>
+
+        <p class="error-message">
+            {{ error_details.user_message }}
+        </p>
+
+        <div class="error-actions">
+            <a href="javascript:history.back()" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Volver Atrás
+            </a>
+            <a href="{% url 'core:dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-home me-2"></i>Ir al Dashboard
+            </a>
+            <button onclick="location.reload()" class="btn btn-outline-secondary">
+                <i class="fas fa-redo me-2"></i>Intentar Nuevamente
+            </button>
+        </div>
+
+        {% if show_technical and error_details.technical_message %}
+        <div class="technical-details">
+            <h5><i class="fas fa-code me-2"></i>Detalles Técnicos (Solo para Administradores)</h5>
+            <p><strong>Tipo de Excepción:</strong> {{ error_details.exception_type }}</p>
+            <pre>{{ error_details.technical_message }}</pre>
+        </div>
+        {% endif %}
+
+        <div class="mt-4">
+            <small class="text-muted">
+                Si el problema persiste, contacte al administrador del sistema.
+                <br>
+                <strong>Hora del error:</strong> {{ "now"|date:"d/m/Y H:i:s" }}
+            </small>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-reporte de errores (opcional)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Registrar error en el cliente para estadísticas
+        console.error('Sistema de Inventario - Error capturado:', {
+            type: '{{ error_details.type }}',
+            message: '{{ error_details.user_message }}',
+            timestamp: new Date().toISOString()
+        });
+    });
+</script>
+{% endblock %}

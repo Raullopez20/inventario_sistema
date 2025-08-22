@@ -1,0 +1,464 @@
+{% extends 'base.html' %}
+
+{% block title %}Imprimir Pegatina - {{ pegatina.producto.numero_serie }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .print-section {
+        background: white;
+        border-radius: 15px;
+        padding: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .pegatina-preview {
+        border: 2px dashed var(--gray-300);
+        border-radius: 15px;
+        padding: 2rem;
+        text-align: center;
+        background: var(--gray-50);
+        margin: 2rem 0;
+    }
+
+    .pegatina-preview img {
+        max-width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border: 1px solid var(--gray-300);
+        border-radius: 10px;
+        background: white;
+        padding: 1rem;
+    }
+
+    .print-instructions {
+        background: linear-gradient(135deg, var(--info) 0%, #42a5f5 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+    }
+
+    .print-instructions h5 {
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+
+    .print-instructions ul {
+        margin-bottom: 0;
+    }
+
+    .print-instructions li {
+        margin-bottom: 0.5rem;
+    }
+
+    .btn-print {
+        background: linear-gradient(135deg, var(--success) 0%, #66bb6a 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(67, 160, 71, 0.3);
+    }
+
+    .btn-print:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(67, 160, 71, 0.4);
+        color: white;
+    }
+
+    .btn-marcar-impresa {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+        border: none;
+        padding: 1rem 2rem;
+        border-radius: 10px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(26, 35, 126, 0.3);
+    }
+
+    .btn-marcar-impresa:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(26, 35, 126, 0.4);
+        color: white;
+    }
+
+    .pegatina-info {
+        background: var(--gray-bg);
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: white;
+        border-radius: 8px;
+        border-left: 4px solid var(--primary);
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: var(--gray-dark);
+    }
+
+    .info-value {
+        color: var(--primary-dark);
+        font-weight: 500;
+    }
+
+    /* Estilos para impresión */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+
+        .print-area, .print-area * {
+            visibility: visible;
+        }
+
+        .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+
+        .no-print {
+            display: none !important;
+        }
+
+        .pegatina-preview {
+            border: none;
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+
+        .pegatina-preview img {
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+    }
+
+    .print-settings {
+        background: white;
+        border: 2px solid var(--gray-light);
+        border-radius: 15px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .print-settings h6 {
+        color: var(--primary-dark);
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .setting-group {
+        margin-bottom: 1rem;
+    }
+
+    .setting-group label {
+        font-weight: 600;
+        color: var(--gray-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .ya-impresa {
+        background: linear-gradient(135deg, var(--success) 0%, #66bb6a 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .ya-impresa h5 {
+        margin-bottom: 0.5rem;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:lista_productos' %}">Productos</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:detalle_producto' pegatina.producto.id %}">{{ pegatina.producto.numero_serie }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'productos:ver_pegatinas' pegatina.producto.id %}">Pegatinas</a></li>
+        <li class="breadcrumb-item active">Imprimir</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+        <i class="fas fa-print me-2"></i>Imprimir Pegatina
+    </h2>
+    <div>
+        <a href="{% url 'productos:descargar_pegatina' pegatina.id %}" class="btn btn-info me-2">
+            <i class="fas fa-download me-2"></i>Descargar
+        </a>
+        <a href="{% url 'productos:ver_pegatinas' pegatina.producto.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver a Pegatinas
+        </a>
+    </div>
+</div>
+
+<!-- Estado de impresión -->
+{% if pegatina.impresa %}
+    <div class="ya-impresa">
+        <h5><i class="fas fa-check-circle me-2"></i>Pegatina Ya Impresa</h5>
+        <p class="mb-0">Esta pegatina fue marcada como impresa el {{ pegatina.fecha_impresion|date:"d/m/Y H:i" }}</p>
+    </div>
+{% endif %}
+
+<!-- Información de la pegatina -->
+<div class="pegatina-info">
+    <div class="info-grid">
+        <div class="info-item">
+            <span class="info-label">Producto:</span>
+            <span class="info-value">{{ pegatina.producto.numero_serie }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Tipo:</span>
+            <span class="info-value">{{ pegatina.get_tipo_pegatina_display }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Generada:</span>
+            <span class="info-value">{{ pegatina.fecha_generacion|date:"d/m/Y H:i" }}</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Código:</span>
+            <span class="info-value">{{ pegatina.codigo_generado }}</span>
+        </div>
+    </div>
+</div>
+
+<!-- Instrucciones de impresión -->
+<div class="print-instructions no-print">
+    <h5><i class="fas fa-info-circle me-2"></i>Instrucciones de Impresión</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Configuración recomendada:</h6>
+            <ul>
+                <li>Papel: Adhesivo resistente al agua</li>
+                <li>Calidad: Alta resolución (300 DPI)</li>
+                <li>Tamaño: A4 o etiquetas específicas</li>
+                <li>Color: Según el tipo de pegatina</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h6>Después de imprimir:</h6>
+            <ul>
+                <li>Verificar la calidad de impresión</li>
+                <li>Recortar con cuidado si es necesario</li>
+                <li>Aplicar protector transparente (opcional)</li>
+                <li>Marcar como impresa en el sistema</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Configuración de impresión -->
+<div class="print-settings no-print">
+    <h6><i class="fas fa-cog me-2"></i>Configuración de Impresión</h6>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="setting-group">
+                <label>Tamaño de papel:</label>
+                <select class="form-select" id="paperSize" onchange="ajustarTamano()">
+                    <option value="A4">A4 (210 x 297 mm)</option>
+                    <option value="letter">Carta (216 x 279 mm)</option>
+                    <option value="label">Etiqueta personalizada</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="setting-group">
+                <label>Orientación:</label>
+                <select class="form-select" id="orientation">
+                    <option value="portrait">Vertical</option>
+                    <option value="landscape">Horizontal</option>
+                </select>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="setting-group">
+                <label>Escala:</label>
+                <select class="form-select" id="scale">
+                    <option value="100">100% (Tamaño real)</option>
+                    <option value="75">75%</option>
+                    <option value="50">50%</option>
+                    <option value="25">25%</option>
+                </select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vista previa de la pegatina -->
+<div class="print-section">
+    <h5 class="no-print"><i class="fas fa-eye me-2"></i>Vista Previa</h5>
+
+    <div class="print-area">
+        <div class="pegatina-preview" id="pegatinaPreview">
+            {% if pegatina.imagen_pegatina %}
+                <img src="{{ pegatina.imagen_pegatina.url }}"
+                     alt="Pegatina {{ pegatina.get_tipo_pegatina_display }}"
+                     id="imagenPegatina">
+            {% else %}
+                <div class="text-muted">
+                    <i class="fas fa-image fa-3x mb-3"></i>
+                    <h5>Imagen no disponible</h5>
+                    <p>La imagen de la pegatina no se pudo cargar.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Botones de acción -->
+<div class="d-flex justify-content-center gap-3 mt-4 no-print">
+    <button onclick="window.print()" class="btn btn-print">
+        <i class="fas fa-print me-2"></i>Imprimir Pegatina
+    </button>
+
+    {% if not pegatina.impresa %}
+        <form method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-marcar-impresa" onclick="return confirmarImpresion()">
+                <i class="fas fa-check me-2"></i>Marcar como Impresa
+            </button>
+        </form>
+    {% endif %}
+
+    <a href="{% url 'productos:descargar_pegatina' pegatina.id %}" class="btn btn-outline-primary">
+        <i class="fas fa-download me-2"></i>Descargar Archivo
+    </a>
+</div>
+
+<!-- Información adicional -->
+<div class="print-section no-print">
+    <h5><i class="fas fa-lightbulb me-2"></i>Consejos Útiles</h5>
+    <div class="row">
+        <div class="col-md-6">
+            <h6>Para mejores resultados:</h6>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-check text-success me-2"></i>Usa papel adhesivo de calidad</li>
+                <li><i class="fas fa-check text-success me-2"></i>Configura la impresora en alta calidad</li>
+                <li><i class="fas fa-check text-success me-2"></i>Verifica la alineación antes de imprimir</li>
+                <li><i class="fas fa-check text-success me-2"></i>Deja secar completamente antes de aplicar</li>
+            </ul>
+        </div>
+        <div class="col-md-6">
+            <h6>Ubicación recomendada:</h6>
+            <ul class="list-unstyled">
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Lugar visible y accesible</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Superficie limpia y seca</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Evitar zonas de alto roce</li>
+                <li><i class="fas fa-arrow-right text-primary me-2"></i>Proteger de la humedad si es necesario</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmarImpresion() {
+        return confirm('¿Confirmas que has impreso correctamente esta pegatina?\n\nEsta acción marcará la pegatina como impresa en el sistema.');
+    }
+
+    function ajustarTamano() {
+        const paperSize = document.getElementById('paperSize').value;
+        const imagen = document.getElementById('imagenPegatina');
+        const preview = document.getElementById('pegatinaPreview');
+
+        if (!imagen) return;
+
+        switch(paperSize) {
+            case 'A4':
+                preview.style.maxWidth = '210mm';
+                preview.style.maxHeight = '297mm';
+                break;
+            case 'letter':
+                preview.style.maxWidth = '216mm';
+                preview.style.maxHeight = '279mm';
+                break;
+            case 'label':
+                preview.style.maxWidth = '100mm';
+                preview.style.maxHeight = '50mm';
+                break;
+        }
+    }
+
+    // Aplicar escala
+    document.getElementById('scale').addEventListener('change', function() {
+        const scale = this.value / 100;
+        const imagen = document.getElementById('imagenPegatina');
+
+        if (imagen) {
+            imagen.style.transform = `scale(${scale})`;
+            imagen.style.transformOrigin = 'center';
+        }
+    });
+
+    // Configuración de impresión
+    window.addEventListener('beforeprint', function() {
+        // Configuraciones adicionales antes de imprimir
+        document.body.classList.add('printing');
+    });
+
+    window.addEventListener('afterprint', function() {
+        // Limpiar después de imprimir
+        document.body.classList.remove('printing');
+
+        // Preguntar si se imprimió correctamente
+        setTimeout(() => {
+            if (confirm('¿Se imprimió la pegatina correctamente?\n\n¿Deseas marcarla como impresa?')) {
+                {% if not pegatina.impresa %}
+                    document.querySelector('form').submit();
+                {% endif %}
+            }
+        }, 1000);
+    });
+
+    // Atajos de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            switch(e.key) {
+                case 'p':
+                    // El navegador manejará Ctrl+P por defecto
+                    break;
+                case 's':
+                    e.preventDefault();
+                    window.location.href = '{% url "productos:descargar_pegatina" pegatina.id %}';
+                    break;
+            }
+        }
+    });
+
+    // Detectar si la página se cargó después de una impresión
+    if (performance.navigation.type === performance.navigation.TYPE_BACK_FORWARD) {
+        // Página accedida desde el historial, posiblemente después de imprimir
+        console.log('Página accedida desde historial');
+    }
+</script>
+{% endblock %}

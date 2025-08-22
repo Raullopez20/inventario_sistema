@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Inventario - {{ fecha_reporte|date:"d/m/Y" }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f8f9fa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .report-header {
+            background: linear-gradient(135deg, #1a237e 0%, #3f51b5 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .report-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-header .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .report-meta {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .meta-item {
+            text-align: center;
+            padding: 1rem;
+            border-left: 4px solid #1a237e;
+            background: #f8f9fa;
+        }
+
+        .meta-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1a237e;
+        }
+
+        .meta-label {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .section {
+            background: white;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .section-header {
+            background: #1a237e;
+            color: white;
+            padding: 1rem 1.5rem;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+
+        .section-content {
+            padding: 1.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 12px 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #1a237e;
+            border-bottom: 2px solid #1a237e;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid #1a237e;
+        }
+
+        .stat-card h4 {
+            color: #1a237e;
+            margin-bottom: 1rem;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #1a237e, #3f51b5);
+            transition: width 0.3s ease;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            border-top: 1px solid #ddd;
+            margin-top: 2rem;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+            font-style: italic;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background: #28a745; color: white; }
+        .badge-warning { background: #ffc107; color: #212529; }
+        .badge-danger { background: #dc3545; color: white; }
+        .badge-info { background: #17a2b8; color: white; }
+        .badge-secondary { background: #6c757d; color: white; }
+
+        @media print {
+            body { background: white; }
+            .container { max-width: none; padding: 0; }
+            .section { box-shadow: none; border: 1px solid #ddd; }
+        }
+
+        @media (max-width: 768px) {
+            .report-header h1 { font-size: 1.8rem; }
+            .meta-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: 1fr; }
+            table { font-size: 0.9rem; }
+            th, td { padding: 8px 4px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado del Reporte -->
+        <div class="report-header">
+            <h1>📊 Reporte de Inventario</h1>
+            <div class="subtitle">
+                Sistema de Gestión de Inventario - {{ fecha_reporte|date:"d de F de Y" }}
+            </div>
+        </div>
+
+        <!-- Metadatos del Reporte -->
+        <div class="report-meta">
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <div class="meta-value">{{ total_productos }}</div>
+                    <div class="meta-label">Productos Totales</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-value">€{{ valor_total_inventario|floatformat:2 }}</div>
+                    <div class="meta-label">Valor Total</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-value">€{{ precio_promedio|floatformat:2 }}</div>
+                    <div class="meta-label">Precio Promedio</div>
+                </div>
+                <div class="meta-item">
+                    <div class="meta-value">{{ asignaciones_recientes }}</div>
+                    <div class="meta-label">Asignaciones (30 días)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Distribución por Estados -->
+        <div class="section">
+            <div class="section-header">
+                📈 Distribución de Productos por Estado
+            </div>
+            <div class="section-content">
+                <div class="stats-grid">
+                    {% for estado in productos_por_estado %}
+                    <div class="stat-card">
+                        <h4>
+                            {% if estado.estado == 'DISPONIBLE' %}
+                                🟢 Disponibles
+                            {% elif estado.estado == 'ENTREGADO' %}
+                                🟡 Entregados
+                            {% elif estado.estado == 'AVERIADO' %}
+                                🔴 Averiados
+                            {% elif estado.estado == 'ROTO' %}
+                                ⚫ Rotos
+                            {% else %}
+                                🔵 {{ estado.estado|title }}
+                            {% endif %}
+                        </h4>
+                        <div class="meta-value">{{ estado.count }}</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: {% widthratio estado.count total_productos 100 %}%"></div>
+                        </div>
+                        <small>{% widthratio estado.count total_productos 100 %}% del total</small>
+                    </div>
+                    {% empty %}
+                    <div class="no-data">No hay datos de estados disponibles</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos por Categoría -->
+        <div class="section">
+            <div class="section-header">
+                📂 Productos por Categoría
+            </div>
+            <div class="section-content">
+                {% if productos_por_categoria %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Total</th>
+                            <th>Disponibles</th>
+                            <th>Entregados</th>
+                            <th>% del Inventario</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for categoria in productos_por_categoria %}
+                        <tr>
+                            <td><strong>{{ categoria.nombre }}</strong></td>
+                            <td>{{ categoria.total }}</td>
+                            <td>
+                                <span class="badge badge-success">{{ categoria.disponibles }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-warning">{{ categoria.entregados }}</span>
+                            </td>
+                            <td>{% widthratio categoria.total total_productos 100 %}%</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-data">No hay datos de categorías disponibles</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Asignaciones por Departamento -->
+        <div class="section">
+            <div class="section-header">
+                🏢 Productos Asignados por Departamento
+            </div>
+            <div class="section-content">
+                {% if productos_por_departamento %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Departamento</th>
+                            <th>Código</th>
+                            <th>Productos Asignados</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for departamento in productos_por_departamento %}
+                        <tr>
+                            <td><strong>{{ departamento.nombre }}</strong></td>
+                            <td><code>{{ departamento.codigo }}</code></td>
+                            <td>
+                                <span class="badge badge-info">{{ departamento.total_asignados }}</span>
+                            </td>
+                            <td>
+                                {% if departamento.activo %}
+                                    <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Inactivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-data">No hay asignaciones por departamento disponibles</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Productos con Garantía Próxima a Vencer -->
+        <div class="section">
+            <div class="section-header">
+                ⚠️ Productos con Garantía Próxima a Vencer (30 días)
+            </div>
+            <div class="section-content">
+                {% if productos_garantia_venciendo %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Número de Serie</th>
+                            <th>Marca</th>
+                            <th>Fecha Vencimiento</th>
+                            <th>Días Restantes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for producto in productos_garantia_venciendo %}
+                        <tr>
+                            <td><strong>{{ producto.modelo }}</strong></td>
+                            <td><code>{{ producto.numero_serie }}</code></td>
+                            <td>{{ producto.marca.nombre }}</td>
+                            <td>{{ producto.fecha_fin_garantia|date:"d/m/Y" }}</td>
+                            <td>
+                                {% with dias_restantes=producto.fecha_fin_garantia|timeuntil %}
+                                    {% if "day" in dias_restantes %}
+                                        <span class="badge badge-warning">{{ dias_restantes }}</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Vencida</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% else %}
+                <div class="no-data">
+                    ✅ No hay productos con garantía próxima a vencer en los próximos 30 días
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Resumen Ejecutivo -->
+        <div class="section">
+            <div class="section-header">
+                📋 Resumen Ejecutivo
+            </div>
+            <div class="section-content">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4>📊 Estado del Inventario</h4>
+                        <p>El inventario cuenta con <strong>{{ total_productos }} productos</strong> registrados con un valor total de <strong>€{{ valor_total_inventario|floatformat:2 }}</strong>.</p>
+                        <p>El precio promedio por producto es de <strong>€{{ precio_promedio|floatformat:2 }}</strong>.</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h4>🔄 Actividad Reciente</h4>
+                        <p>En los últimos 30 días se han registrado <strong>{{ asignaciones_recientes }} asignaciones</strong> de productos.</p>
+                        <p>{% if productos_garantia_venciendo %}Se detectaron <strong>{{ productos_garantia_venciendo|length }} productos</strong> con garantía próxima a vencer.{% else %}No hay productos con garantía próxima a vencer.{% endif %}</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <h4>📈 Recomendaciones</h4>
+                        <ul style="margin: 0; padding-left: 1.2rem;">
+                            {% if productos_garantia_venciendo %}
+                            <li>Revisar productos con garantía próxima a vencer</li>
+                            {% endif %}
+                            <li>Mantener inventario actualizado regularmente</li>
+                            <li>Revisar productos averiados para reparación</li>
+                            <li>Generar reportes mensuales de seguimiento</li>
+                        </ul>
+                    </div>
+
+                    <div class="stat-card">
+                        <h4>ℹ️ Información del Reporte</h4>
+                        <p><strong>Fecha de generación:</strong> {{ fecha_reporte|date:"d/m/Y H:i" }}</p>
+                        <p><strong>Sistema:</strong> Inventario v1.0</p>
+                        <p><strong>Formato:</strong> HTML</p>
+                        <p><strong>Cobertura:</strong> Inventario completo</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pie del Reporte -->
+        <div class="footer">
+            <p>📄 Reporte generado el {{ fecha_reporte|date:"d de F de Y" }} a las {{ fecha_reporte|date:"H:i" }}</p>
+            <p>🏢 Sistema de Gestión de Inventario - Todos los derechos reservados</p>
+        </div>
+    </div>
+
+    <script>
+        // Imprimir automáticamente si se especifica en la URL
+        if (window.location.search.includes('print=true')) {
+            window.print();
+        }
+
+        // Agregar botón de impresión si no estamos en PDF
+        if (!window.location.search.includes('formato=pdf')) {
+            const button = document.createElement('button');
+            button.innerHTML = '🖨️ Imprimir Reporte';
+            button.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 10px 20px;
+                background: #1a237e;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+                z-index: 1000;
+            `;
+            button.onclick = () => window.print();
+            document.body.appendChild(button);
+        }
+    </script>
+</body>
